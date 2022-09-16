@@ -1,5 +1,19 @@
 #include "ros/ros.h"
+#include "../include/cluser_node/utility.h"
 
+void processDBSCAN()
+{
+}
+
+void getThreshold()
+{
+
+}
+
+void laserscanCallback()
+{
+
+}
 
 int main(int argc, char ** argv)
 {
