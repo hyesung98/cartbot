@@ -2,6 +2,7 @@
 #define UTILITY_H
 #include <ros/ros.h>
 #include <vector>
+#include <map>
 #include <iostream>
 #include <random>
 #include <math.h>
@@ -44,8 +45,15 @@ typedef struct
 
 typedef struct
 {
-    float x; // center coordinate
-    float y;
+    float x, y;
+    float vx, vy;
+    float ax, ay;
+    ros::Time now_time;
+} Model;
+
+typedef struct
+{
+    float x, y;
     std::vector<Point> ptlist;
     int id;
     float width;
@@ -69,7 +77,6 @@ static sensor_msgs::PointCloud2 cloud2cloudmsg(pcl::PointCloud<pcl::PointXYZ> &c
     return cloudmsg;
 }
 
-
 static void setBox(const Object &cluster, jsk_recognition_msgs::BoundingBox &box)
 {
     box.header.frame_id = "laser_frame";
@@ -88,7 +95,7 @@ static void setTextMarker(const Object &cluster, visualization_msgs::Marker &mar
 {
     marker.header.frame_id = "laser_frame"; // map frame 기준
     marker.header.stamp = ros::Time::now();
-    marker.text = "x: " +std::to_string(cluster.x) + " \n" + "y: " + std::to_string(cluster.y) + " \n" + "dist: " + std::to_string(cluster.dist) + " \n" + "id: " + std::to_string(cluster.id);
+    marker.text = "x: " + std::to_string(cluster.x) + " \n" + "y: " + std::to_string(cluster.y) + " \n" + "dist: " + std::to_string(cluster.dist) + " \n" + "id: " + std::to_string(cluster.id);
     marker.scale.z = 0.1;
     marker.color.a = 1.0;
     marker.color.r = 1.0;
