@@ -19,21 +19,21 @@ class PARTICLE_FILTER
     public:
         PARTICLE_FILTER(int num);
         ~PARTICLE_FILTER(){}
-        void run();
-        void initCoordination(float x, float y);
-        void doPrediction(); //motion_model
-        void doResampling();
-        CLUSTER_STATE doUpdate(const cartbot::clusterarray &clusterlist);
-        pcl::PointCloud<pcl::PointXYZ> particle_cloud;
-        float getBoundX() {return bound_x;};
-        float getBoundY() {return bound_y;};
+        void initCoordination(const float, const float, ros::Time);
+        void run(const Model &, const std::vector<Model> &);
+        pcl::PointCloud<pcl::PointXYZ> & getParticle() {return particle_cloud_;};
+        float getX() { return x_; };
+        float getY() { return y_; };
     private:
-        int numofParticles;
-        float bound_x, bound_y;
-        float weight_sum;
-        int lost_cnt;
-        std::vector<particle> ptlist;
-        bool isNear(cartbot::cluster &cluster);
+        ros::Time bf_time_;
+        int numparticles_;
+        float x_, y_;
+        float weight_sum_;
+        std::vector<particle> ptlist_;
+        pcl::PointCloud<pcl::PointXYZ> particle_cloud_;
+        void doPrediction(const Model &);
+        void doUpdate(const std::vector<Model> &);
+        void doResampling();
 };
 
 #endif
