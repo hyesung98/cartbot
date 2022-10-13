@@ -8,10 +8,11 @@ ros::Publisher cluster_pub;
 
 jsk_recognition_msgs::BoundingBoxArray boxlist;
 visualization_msgs::MarkerArray textlist;
-
 pcl::PointCloud<pcl::PointXYZI> cluster_cloud;
 
-float cluster_x, cluster_y;
+
+// clusterlist buffer_size => vouch cnt = 3
+#define BUFFER_SIZE 4
 
 // DBSCAN parameter
 #define MIN_PTS 10
@@ -90,7 +91,7 @@ void visualizeCluster(const std::vector<Object> &clusterlist)
     text_pub.publish(textlist);
 }
 
-void lidar_scan_callback(const sensor_msgs::LaserScan::ConstPtr &scan_msg)
+void lidarCallback(const sensor_msgs::LaserScan::ConstPtr &scan_msg)
 {
     std::vector<Point> scan_data;
     for (int i = 0; i < scan_msg->ranges.size(); i++)
@@ -192,7 +193,7 @@ void lidar_scan_callback(const sensor_msgs::LaserScan::ConstPtr &scan_msg)
             else
             {
                 it_cluster->Header.frame_id = "laser_frame";
-                it_cluster->Header.stamp = ros::Time::now();
+                it_cluster->Header.stamp = scan_msg->header.stamp;
                 it_object->width = abs(max_x - min_x);
                 it_object->height = abs(max_y - min_y);
                 it_object->dist = sqrt(pow(avg_x, 2) + pow(avg_y, 2));
@@ -213,7 +214,7 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "cluster_node");
     ros::NodeHandle nh;
     ros::Rate loop_rate(10);
-    ros::Subscriber lidar_sub = nh.subscribe<sensor_msgs::LaserScan>("/scan", 1, lidar_scan_callback);
+    ros::Subscriber lidar_sub = nh.subscribe<sensor_msgs::LaserScan>("/scan", 1, lidarCallback);
     vis_pub = nh.advertise<jsk_recognition_msgs::BoundingBoxArray>("/cluster_boxlist", 1);
     pt_pub = nh.advertise<sensor_msgs::PointCloud2>("/cluster_cloud", 1);
     text_pub = nh.advertise<visualization_msgs::MarkerArray>("/cluster_text", 1);
