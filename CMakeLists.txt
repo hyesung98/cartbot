@@ -23,7 +23,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 find_package(PCL 1.8 REQUIRED)
-
+find_package(Eigen3 REQUIRED)
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -133,11 +133,13 @@ include_directories(
   include
   ${catkin_INCLUDE_DIRS}
   ${PCL_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIR}
 )
 
 link_directories(
   include
   ${PCL_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIR}
 )
 
 ## Declare a C++ library
@@ -163,6 +165,7 @@ src/dbscan.cpp
 add_executable(tracking_node
 src/particle_filter.cpp
 src/tracking_node.cpp
+src/kalman_filter.cpp
 )
 
 ## Rename C++ executable without prefix
@@ -179,10 +182,10 @@ add_dependencies(tracking_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPO
 ## Specify libraries to link a library or executable target against
 
 # Object Clustering
-target_link_libraries(cluster_node ${catkin_LIBRARIES} ${PCL_INCLUDE_DIRS})
+target_link_libraries(cluster_node ${catkin_LIBRARIES} ${PCL_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR})
 
 # Object Tracking
-target_link_libraries(tracking_node ${catkin_LIBRARIES} ${PCL_INCLUDE_DIRS})
+target_link_libraries(tracking_node ${catkin_LIBRARIES} ${PCL_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR})
 
 #############
 ## Install ##
