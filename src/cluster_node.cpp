@@ -193,7 +193,7 @@ void lidarCallback(const sensor_msgs::LaserScan::ConstPtr &scan_msg)
             else
             {
                 it_cluster->Header.frame_id = "laser_frame";
-                it_cluster->Header.stamp = scan_msg->header.stamp;
+                it_cluster->Header.stamp = ros::Time::now();
                 it_object->width = abs(max_x - min_x);
                 it_object->height = abs(max_y - min_y);
                 it_object->dist = sqrt(pow(avg_x, 2) + pow(avg_y, 2));
