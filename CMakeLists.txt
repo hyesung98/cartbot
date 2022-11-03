@@ -20,6 +20,7 @@ find_package(catkin REQUIRED COMPONENTS
   eigen_stl_containers
   jsk_rviz_plugins
   message_generation
+  grid_map_rviz_plugin
 )
 
 find_package(PCL 1.8 REQUIRED)
@@ -156,8 +157,8 @@ link_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 
 # Object Clutering
-add_executable(cluster_node
-src/cluster_node.cpp
+add_executable(clustering_node
+src/clustering_node.cpp
 src/dbscan.cpp
 )
 
@@ -168,6 +169,10 @@ src/tracking_node.cpp
 src/kalman_filter.cpp
 )
 
+# Object Avoiding
+add_executable(avoiding_node
+src/avoiding_node.cpp)
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -176,17 +181,19 @@ src/kalman_filter.cpp
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-add_dependencies(cluster_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(clustering_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(tracking_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
+add_dependencies(avoiding_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 ## Specify libraries to link a library or executable target against
 
 # Object Clustering
-target_link_libraries(cluster_node ${catkin_LIBRARIES} ${PCL_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR})
+target_link_libraries(clustering_node ${catkin_LIBRARIES} ${PCL_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR})
 
 # Object Tracking
 target_link_libraries(tracking_node ${catkin_LIBRARIES} ${PCL_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR})
 
+# Object Avoiding
+target_link_libraries(avoiding_node ${catkin_LIBRARIES} ${PCL_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR})
 #############
 ## Install ##
 #############
