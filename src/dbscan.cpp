@@ -1,16 +1,16 @@
 #include <cartbot/dbscan.h>
 
-int DBSCAN::run()
+int DBSCAN::Run()
 {
     int clusterID = 1;
     int index = 0;
     std::vector<Point>::iterator iter;
-    calculateThreshold();
-    for (iter = m_points.begin(); iter != m_points.end(); ++iter)
+    CalculateThreshold();
+    for (iter = m_points_.begin(); iter != m_points_.end(); ++iter)
     {
         if (iter->clusterID == UNCLASSIFIED)
         {
-            if (expandCluster(*iter, clusterID) != FAILURE)
+            if (ExpandCluster(*iter, clusterID) != FAILURE)
             {
                 clusterID += 1;
             }
@@ -19,11 +19,11 @@ int DBSCAN::run()
     return clusterID;
 }
 
-int DBSCAN::expandCluster(Point point, int clusterID)
+int DBSCAN::ExpandCluster(Point point, int clusterID)
 {
-    std::vector<int> clusterSeeds = calculateCluster(point);
+    std::vector<int> clusterSeeds = CalculateCluster(point);
 
-    if (clusterSeeds.size() < m_minPoints)
+    if (clusterSeeds.size() < m_minPoints_)
     {
         point.clusterID = NOISE;
         return FAILURE;
@@ -34,8 +34,8 @@ int DBSCAN::expandCluster(Point point, int clusterID)
         std::vector<int>::iterator iterSeeds;
         for (iterSeeds = clusterSeeds.begin(); iterSeeds != clusterSeeds.end(); ++iterSeeds)
         {
-            m_points.at(*iterSeeds).clusterID = clusterID;
-            if (m_points.at(*iterSeeds).x == point.x && m_points.at(*iterSeeds).y == point.y)
+            m_points_.at(*iterSeeds).clusterID = clusterID;
+            if (m_points_.at(*iterSeeds).x == point.x && m_points_.at(*iterSeeds).y == point.y)
             {
                 indexCorePoint = index;
             }
@@ -45,21 +45,21 @@ int DBSCAN::expandCluster(Point point, int clusterID)
 
         for (std::vector<int>::size_type i = 0, n = clusterSeeds.size(); i < n; ++i)
         {
-            std::vector<int> clusterNeighors = calculateCluster(m_points.at(clusterSeeds[i]));
+            std::vector<int> clusterNeighors = CalculateCluster(m_points_.at(clusterSeeds[i]));
 
-            if (clusterNeighors.size() >= m_minPoints)
+            if (clusterNeighors.size() >= m_minPoints_)
             {
                 std::vector<int>::iterator iterNeighors;
                 for (iterNeighors = clusterNeighors.begin(); iterNeighors != clusterNeighors.end(); ++iterNeighors)
                 {
-                    if (m_points.at(*iterNeighors).clusterID == UNCLASSIFIED || m_points.at(*iterNeighors).clusterID == NOISE)
+                    if (m_points_.at(*iterNeighors).clusterID == UNCLASSIFIED || m_points_.at(*iterNeighors).clusterID == NOISE)
                     {
-                        if (m_points.at(*iterNeighors).clusterID == UNCLASSIFIED)
+                        if (m_points_.at(*iterNeighors).clusterID == UNCLASSIFIED)
                         {
                             clusterSeeds.push_back(*iterNeighors);
                             n = clusterSeeds.size();
                         }
-                        m_points.at(*iterNeighors).clusterID = clusterID;
+                        m_points_.at(*iterNeighors).clusterID = clusterID;
                     }
                 }
             }
@@ -68,14 +68,14 @@ int DBSCAN::expandCluster(Point point, int clusterID)
     }
 }
 
-std::vector<int> DBSCAN::calculateCluster(Point point)
+std::vector<int> DBSCAN::CalculateCluster(Point point)
 {
     int idx = 0;
     std::vector<int> clst_idx;
-    std::vector<float>::iterator ths_iter = m_thresholds.begin();
-    for (auto pt_iter = m_points.begin(); pt_iter != m_points.end(); ++pt_iter)
+    std::vector<float>::iterator ths_iter = m_thresholds_.begin();
+    for (auto pt_iter = m_points_.begin(); pt_iter != m_points_.end(); ++pt_iter)
     {
-        if (calculateDistance(point, *pt_iter) <= *ths_iter)
+        if (CalculateDistance(point, *pt_iter) <= *ths_iter)
         {
             clst_idx.push_back(idx);
         }
@@ -86,19 +86,19 @@ std::vector<int> DBSCAN::calculateCluster(Point point)
 }
 
 // Adaptive Breakpoint Detector
-inline void DBSCAN::calculateThreshold()
+inline void DBSCAN::CalculateThreshold()
 {
     float threshold;
     const float l = DEG2RAD(12);
     const float s = 0.13;
     int idx = 0;
-    for(auto pt_iter = m_points.begin(); pt_iter !=  m_points.end() ; pt_iter++)
+    for(auto pt_iter = m_points_.begin(); pt_iter !=  m_points_.end() ; pt_iter++)
     {
         float dth, dist;
         if(idx == 0)
         {
-            dth = pt_iter->theta + m_points.at(m_points.size()-1).theta;
-            dist = m_points.at(m_points.size()-1).range;
+            dth = pt_iter->theta + m_points_.at(m_points_.size()-1).theta;
+            dist = m_points_.at(m_points_.size()-1).range;
         }
         else
         {
@@ -106,12 +106,12 @@ inline void DBSCAN::calculateThreshold()
             dist = (pt_iter - 1)->range;
         }
         threshold = dist * (SIN(dth)) / (SIN(l - dth)) + s * 3;
-        m_thresholds.push_back(std::min(threshold, m_epsilon));
+        m_thresholds_.push_back(std::min(threshold, m_epsilon_));
         idx++;
     }
 }
 
-inline double DBSCAN::calculateDistance(const Point &pointCore, const Point &pointTarget)
+inline double DBSCAN::CalculateDistance(const Point &pointCore, const Point &pointTarget)
 {
     return sqrt(pow(pointCore.x - pointTarget.x, 2) + pow(pointCore.y - pointTarget.y, 2));
 }

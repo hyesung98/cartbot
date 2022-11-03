@@ -10,11 +10,7 @@ jsk_recognition_msgs::BoundingBoxArray boxlist;
 visualization_msgs::MarkerArray textlist;
 pcl::PointCloud<pcl::PointXYZI> cluster_cloud;
 
-
-// clusterlist buffer_size => vouch cnt = 3
 #define BUFFER_SIZE 4
-
-// DBSCAN parameter
 #define MIN_PTS 10
 #define MIN_EPS 0.3
 #define BOUNDARY 3
@@ -91,7 +87,7 @@ void visualizeCluster(const std::vector<Object> &clusterlist)
     text_pub.publish(textlist);
 }
 
-void lidarCallback(const sensor_msgs::LaserScan::ConstPtr &scan_msg)
+void ScanCallback(const sensor_msgs::LaserScan::ConstPtr &scan_msg)
 {
     std::vector<Point> scan_data;
     for (int i = 0; i < scan_msg->ranges.size(); i++)
@@ -108,9 +104,9 @@ void lidarCallback(const sensor_msgs::LaserScan::ConstPtr &scan_msg)
     }
 
     /* DBSCAN & ABD Processing*/
-    DBSCAN clustering(MIN_PTS, MIN_EPS, scan_data);
-    int cluster_size = clustering.run();
-    std::vector<Point> clustered_data = clustering.getClusteringData();
+    DBSCAN dbscan(MIN_PTS, MIN_EPS, scan_data);
+    int cluster_size = dbscan.Run();
+    std::vector<Point> clustered_data = dbscan.GetClusteringData();
     std::vector<Object> object_data(cluster_size);
     cartbot::clusterarray cluster_list;
     cluster_list.clusters.resize(cluster_size);
@@ -211,15 +207,15 @@ void lidarCallback(const sensor_msgs::LaserScan::ConstPtr &scan_msg)
 
 int main(int argc, char **argv)
 {
-    ros::init(argc, argv, "cluster_node");
+    ros::init(argc, argv, "clustering_node");
     ros::NodeHandle nh;
     ros::Rate loop_rate(10);
-    ros::Subscriber lidar_sub = nh.subscribe<sensor_msgs::LaserScan>("/scan", 1, lidarCallback);
-    vis_pub = nh.advertise<jsk_recognition_msgs::BoundingBoxArray>("/cluster_boxlist", 1);
-    pt_pub = nh.advertise<sensor_msgs::PointCloud2>("/cluster_cloud", 1);
-    text_pub = nh.advertise<visualization_msgs::MarkerArray>("/cluster_text", 1);
-    cluster_pub = nh.advertise<cartbot::clusterarray>("cluster_object", 1);
-    ROS_INFO("\033----> Clustering Started.\033");
+    ros::Subscriber lidar_sub = nh.subscribe<sensor_msgs::LaserScan>("/scan", 1, ScanCallback);
+    vis_pub = nh.advertise<jsk_recognition_msgs::BoundingBoxArray>("/cluster/boxlist", 1);
+    pt_pub = nh.advertise<sensor_msgs::PointCloud2>("/cluster/cloud", 1);
+    text_pub = nh.advertise<visualization_msgs::MarkerArray>("/cluster/text", 1);
+    cluster_pub = nh.advertise<cartbot::clusterarray>("/cluster/clusterarray", 1);
+    ROS_INFO("\033----> DBSCAN & ABD Started.\033");
     ros::spin();
     return 0;
 }

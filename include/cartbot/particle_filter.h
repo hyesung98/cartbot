@@ -14,26 +14,31 @@ typedef struct
     float weight;
 }particle;
 
-class PARTICLE_FILTER
+typedef struct
+{
+    double x, y;
+}measure;
+
+class Particle_Filter
 {
     public:
-        PARTICLE_FILTER(int num);
-        ~PARTICLE_FILTER(){}
-        void initCoordination(const float, const float, ros::Time);
-        void run(const Model &, const std::vector<Model> &);
+        Particle_Filter(const int num);
+        ~Particle_Filter(){}
+        void InitCoordinate(const float &x, const float &y, const ros::Time &t);
+        void Run(const double &vx, const double &vy, const std::vector<measure> &m);
         pcl::PointCloud<pcl::PointXYZ> & getParticle() {return particle_cloud_;};
-        float getX() { return x_; };
-        float getY() { return y_; };
+        const float GetX() { return x; };
+        const float GetY() { return y; };
     private:
-        ros::Time bf_time_;
+        ros::Time pre_time;
         int numparticles_;
-        float x_, y_;
         float weight_sum_;
+        float x, y;
         std::vector<particle> ptlist_;
         pcl::PointCloud<pcl::PointXYZ> particle_cloud_;
-        void doPrediction(const Model &);
-        void doUpdate(const std::vector<Model> &);
-        void doResampling();
+        void Prediction(double vx, double vy);
+        void Update(std::vector<measure> measureList);
+        void Resampling();
 };
 
 #endif

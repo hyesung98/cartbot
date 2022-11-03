@@ -12,33 +12,32 @@
 #define SUCCESS 0
 #define FAILURE -3
 
-
-class DBSCAN {
+class DBSCAN
+{
 public:
-    DBSCAN(unsigned int minPts, float eps, std::vector<Point> &points){
-        m_minPoints = minPts;
-        m_epsilon = eps;
-        m_points = points;
-        m_pointSize = points.size();
+    DBSCAN(const unsigned int &minPts, const float &eps, std::vector<Point> &points)
+    {
+        m_minPoints_ = minPts;
+        m_epsilon_ = eps;
+        m_points_ = points;
+        m_pointSize_ = points.size();
     }
-    ~DBSCAN(){}
+    ~DBSCAN() {}
 
-    int run();
-    std::vector<int> calculateCluster(Point point);
-    int expandCluster(Point point, int clusterID);
-    inline void calculateThreshold();
-    inline double calculateDistance(const Point& pointCore, const Point& pointTarget);
-    int getTotalPointSize() {return m_pointSize;}
-    int getMinimumClusterSize() {return m_minPoints;}
-    int getEpsilonSize() {return m_epsilon;}
-    std::vector<Point> getClusteringData(){return m_points;};
-public:
-    std::vector<Point> m_points;
-    std::vector<float> m_thresholds;
+    int Run();
+    std::vector<int> CalculateCluster(Point point);
+    int ExpandCluster(Point point, int clusterID);
+    inline void CalculateThreshold();
+    inline double CalculateDistance(const Point &pointCore, const Point &pointTarget);
+    int GetTotalPointSize() { return m_pointSize_; }
+    int GetEpsilonSize() { return m_epsilon_; }
+    std::vector<Point> GetClusteringData() { return m_points_; };
 
 private:
-    unsigned int m_pointSize;
-    unsigned int m_minPoints;
-    float m_epsilon;
+    std::vector<Point> m_points_;
+    std::vector<float> m_thresholds_;
+    unsigned int m_pointSize_;
+    unsigned int m_minPoints_;
+    float m_epsilon_;
 };
 #endif
