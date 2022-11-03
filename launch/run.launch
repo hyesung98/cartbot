@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <launch>
-    <node pkg="cartbot" type="cluster_node" name="cluster_node" output="screen" />
+    <node pkg="cartbot" type="clustering_node" name="clustering_node" output="screen" />
 
     <node pkg="cartbot" type="tracking_node" name="tracking_node" output="screen" />
 
