@@ -2,11 +2,11 @@
 #include <vector>
 #include <cartbot/kalman_filter.h>
 
-void KalmanFilter::init(const Eigen::MatrixXd &A_,
+void KalmanFilter::initMatrix(const Eigen::MatrixXd &A_,
                         const Eigen::MatrixXd &C_,
                         const Eigen::MatrixXd &R_,
                         const Eigen::MatrixXd &P_,
-                        const double Q)
+                        const double &Q)
 {
     e = Q;
     A = A_;
@@ -22,7 +22,7 @@ void KalmanFilter::init(const Eigen::MatrixXd &A_,
     initialized = true;
 }
 
-void KalmanFilter::updateT(double dt)
+void KalmanFilter::updateTime(const double &dt)
 {
     if (!initialized)
     {
@@ -54,16 +54,18 @@ void KalmanFilter::initValue(const Eigen::VectorXd& x0)
     initialized = true;
 }
 
-void KalmanFilter::update(const Eigen::VectorXd &z) // Sensor input matrix
+void KalmanFilter::processKalmanFilter(const Eigen::VectorXd &z) // Sensor input matrix
 {
     if (!initialized)
     {
         std::cout << "Filter is not initialized" << std::endl;
     }
-    // Predict
+
+    /* Prediction */
     x_hat = A * x_hat;             // State Space Equation
     P = A * P * A.transpose() + Q; // Calculate Covariance Matrix
-    // Measurement
+
+    /* Measurement */
     K = P * C.transpose() * (C * P * C.transpose() + R).inverse();
     x_hat += K * (z - C * x_hat);
     P = (I - K * C) * P;

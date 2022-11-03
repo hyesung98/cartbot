@@ -25,13 +25,19 @@
 #define COS cos
 #define SIN sin
 
-enum CLUSTER_STATE
+enum State
 {
     LOST,
     STAGE1,
     STAGE2,
     STAGE3,
     TRACKING,
+};
+
+enum Axis
+{
+    X,
+    Y
 };
 
 typedef struct
@@ -46,11 +52,11 @@ typedef struct
 
 typedef struct
 {
-    float x, y;
-    float vx, vy;
-    float ax, ay;
-    ros::Time now_time;
-} Model;
+    double now_pos[2];
+    double now_vel[2];
+    double pre_pos[2];
+    double pre_vel[2];
+} Measurement;
 
 typedef struct
 {
@@ -61,6 +67,18 @@ typedef struct
     float height;
     float dist;
 } Object;
+
+static void updateMeasurement(Measurement &m, const double &x, const double &y, const double &dt)
+{
+    m.now_pos[X] = x;
+    m.now_pos[Y] = y;
+    m.now_vel[X] = (m.now_pos[X] - m.pre_pos[X]) / dt;
+    m.now_vel[Y] = (m.now_pos[Y] - m.pre_pos[Y]) / dt;
+    m.pre_pos[X] = m.now_pos[X];
+    m.pre_pos[Y] = m.now_pos[Y];
+    m.pre_vel[X] = m.pre_vel[X];
+    m.pre_vel[Y] = m.pre_vel[Y];
+}
 
 static sensor_msgs::PointCloud2 cloud2cloudmsg(pcl::PointCloud<pcl::PointXYZI> &cloud_src)
 {
@@ -94,7 +112,7 @@ static void setBox(const Object &cluster, jsk_recognition_msgs::BoundingBox &box
 
 static void setTextMarker(const Object &cluster, visualization_msgs::Marker &marker)
 {
-    marker.header.frame_id = "laser_frame"; // map frame 기준
+    marker.header.frame_id = "laser_frame";
     marker.header.stamp = ros::Time::now();
     marker.text = "x: " + std::to_string(cluster.x) + " \n" + "y: " + std::to_string(cluster.y) + " \n" + "dist: " + std::to_string(cluster.dist) + " \n" + "id: " + std::to_string(cluster.id);
     marker.scale.z = 0.1;
