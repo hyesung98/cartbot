@@ -2,6 +2,7 @@
 #define UTILITY_H
 #include <ros/ros.h>
 #include <vector>
+#include <thread>
 #include <map>
 #include <iostream>
 #include <random>
@@ -17,8 +18,10 @@
 #include <visualization_msgs/MarkerArray.h>
 #include <jsk_recognition_msgs/BoundingBoxArray.h>
 #include <jsk_recognition_msgs/BoundingBox.h>
-#include <cartbot/cluster.h>
-#include <cartbot/clusterarray.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <cartbot/Cluster.h>
+#include <cartbot/ClusterArray.h>
+#include <cartbot/Target.h>
 // Math function define
 #define RAD2DEG(rad) rad *(180 / M_PI)
 #define DEG2RAD(deg) deg * 174533e-07
@@ -28,10 +31,9 @@
 enum State
 {
     LOST,
-    STAGE1,
-    STAGE2,
-    STAGE3,
-    TRACKING,
+    COUNT,
+    INIT,
+    TRACKING
 };
 
 enum Axis
@@ -60,6 +62,12 @@ typedef struct
 
 typedef struct
 {
+    double pos[2];
+    double vel[2];
+} Estimation;
+
+typedef struct
+{
     float x, y;
     std::vector<Point> ptlist;
     int id;
@@ -78,6 +86,14 @@ static void updateMeasurement(Measurement &m, const double &x, const double &y, 
     m.pre_pos[Y] = m.now_pos[Y];
     m.pre_vel[X] = m.pre_vel[X];
     m.pre_vel[Y] = m.pre_vel[Y];
+}
+
+static void updateEstimation(Estimation &e, const double &kf_x, const double &kf_y, const double &kf_vx, const double &kf_vy)
+{
+    e.pos[X] = kf_x;
+    e.pos[Y] = kf_y;
+    e.vel[X] = kf_vx;
+    e.vel[Y] = kf_vy;
 }
 
 static sensor_msgs::PointCloud2 cloud2cloudmsg(pcl::PointCloud<pcl::PointXYZI> &cloud_src)

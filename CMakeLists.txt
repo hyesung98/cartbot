@@ -20,7 +20,7 @@ find_package(catkin REQUIRED COMPONENTS
   eigen_stl_containers
   jsk_rviz_plugins
   message_generation
-  grid_map_rviz_plugin
+  xmlrpcpp
 )
 
 find_package(PCL 1.8 REQUIRED)
@@ -62,8 +62,9 @@ find_package(Eigen3 REQUIRED)
 add_message_files(
   DIRECTORY msg
   FILES
-  cluster.msg
-  clusterarray.msg
+  Cluster.msg
+  ClusterArray.msg
+  Target.msg
 )
 
 ## Generate services in the 'srv' folder

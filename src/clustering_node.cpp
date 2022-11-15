@@ -10,10 +10,21 @@ jsk_recognition_msgs::BoundingBoxArray boxlist;
 visualization_msgs::MarkerArray textlist;
 pcl::PointCloud<pcl::PointXYZI> cluster_cloud;
 
-#define BUFFER_SIZE 4
-#define MIN_PTS 10
-#define MIN_EPS 0.3
-#define BOUNDARY 3
+/* ROS Parameter Variable*/
+double min_pts;
+double min_eps;
+double window_boundary;
+
+bool getParameter(ros::NodeHandle &nh)
+{
+    if(!nh.getParam("min_pts", min_pts))
+        return false;
+    if(!nh.getParam("min_eps", min_eps))
+        return false;
+    if(!nh.getParam("window_boundary", window_boundary))
+        return false;
+    return true;
+}
 
 void visualizeCluster(const std::vector<Object> &clusterlist)
 {
@@ -104,12 +115,12 @@ void ScanCallback(const sensor_msgs::LaserScan::ConstPtr &scan_msg)
     }
 
     /* DBSCAN & ABD Processing*/
-    DBSCAN dbscan(MIN_PTS, MIN_EPS, scan_data);
+    DBSCAN dbscan(min_pts, min_eps, scan_data);
     int cluster_size = dbscan.Run();
     std::vector<Point> clustered_data = dbscan.GetClusteringData();
     std::vector<Object> object_data(cluster_size);
-    cartbot::clusterarray cluster_list;
-    cluster_list.clusters.resize(cluster_size);
+    cartbot::ClusterArray cluster_list;
+    cluster_list.Clusters.resize(cluster_size);
 
     /* Classify Point by ID */
     cluster_cloud.clear();
@@ -120,19 +131,19 @@ void ScanCallback(const sensor_msgs::LaserScan::ConstPtr &scan_msg)
             pcl::PointXYZI pcl_pt;
             geometry_msgs::Point gm_pt;
             gm_pt.x = pcl_pt.x = pt.x;
-            gm_pt.x = pcl_pt.y = pt.y;
+            gm_pt.y = pcl_pt.y = pt.y;
             gm_pt.z = pcl_pt.z = 0;
             pcl_pt.intensity = pt.clusterID - 1;
             cluster_cloud.push_back(pcl_pt);
             object_data.at(pt.clusterID - 1).ptlist.push_back(pt);
-            cluster_list.clusters.at(pt.clusterID - 1).points.push_back(gm_pt);
+            cluster_list.Clusters.at(pt.clusterID - 1).points.push_back(gm_pt);
         }
     }
     pt_pub.publish(cloud2cloudmsg(cluster_cloud));
 
     /* Center Point Average Processing */
     int id = 1;
-    auto it_cluster = cluster_list.clusters.begin();
+    auto it_cluster = cluster_list.Clusters.begin();
     for (auto it_object = object_data.begin(); it_object != object_data.end();)
     {
         double avg_x = 0, avg_y = 0;
@@ -177,14 +188,14 @@ void ScanCallback(const sensor_msgs::LaserScan::ConstPtr &scan_msg)
         if (avg_x == 0 && avg_y == 0)
         {
             it_object = object_data.erase(it_object);
-            it_cluster = cluster_list.clusters.erase(it_cluster);
+            it_cluster = cluster_list.Clusters.erase(it_cluster);
         }
         else
         {
-            if (abs(avg_x) > BOUNDARY || abs(avg_y) > BOUNDARY)
+            if (abs(avg_x) > window_boundary || abs(avg_y) > window_boundary)
             {
                 it_object = object_data.erase(it_object);
-                it_cluster = cluster_list.clusters.erase(it_cluster);
+                it_cluster = cluster_list.Clusters.erase(it_cluster);
             }
             else
             {
@@ -214,7 +225,12 @@ int main(int argc, char **argv)
     vis_pub = nh.advertise<jsk_recognition_msgs::BoundingBoxArray>("/cluster/boxlist", 1);
     pt_pub = nh.advertise<sensor_msgs::PointCloud2>("/cluster/cloud", 1);
     text_pub = nh.advertise<visualization_msgs::MarkerArray>("/cluster/text", 1);
-    cluster_pub = nh.advertise<cartbot::clusterarray>("/cluster/clusterarray", 1);
+    cluster_pub = nh.advertise<cartbot::ClusterArray>("/cluster/clusterarray", 1);
+    if(!getParameter(nh))
+    {
+        ROS_ERROR_STREAM("Check clustering node parmeter!");
+        exit(0);
+    }
     ROS_INFO("\033----> DBSCAN & ABD Started.\033");
     ros::spin();
     return 0;

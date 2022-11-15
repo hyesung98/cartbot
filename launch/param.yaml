@@ -1,0 +1,52 @@
+# %Clustering Node Parameter
+min_pts: 10.0
+min_eps: 0.3
+window_boundary: 3
+
+# %Tracking Node Parameter
+dist_threshold: 0.7
+min_range: 0.5
+wait_time: 4.0
+
+# --State Transition Matrix (4x4)
+A: [1,    0,    0.1,  0,
+    0,    1,    0,    0.1,
+    0,    0,    1,    0,
+    0,    0,    0,    1]
+
+# --Observation Marix (4x4)
+C: [1,    0,    0,    0,
+    0,    1,    0,    0,
+    0,    0,    1,    0,
+    0,    0,    0,    1]
+
+# --Measurment Error Covariance Matrix (4x4)
+R: [0.5,  0,    0,    0,
+    0,    0.5,  0,    0,
+    0,    0,    0.5,  0,
+    0,    0,    0,    0.5]
+
+# --State Convariance Matrix (4x4)
+P: [5,    0,     5,    0,
+    0,     5,    0,     5,
+    5,    0,     5,    0,
+    0,     5,    0,     5]
+
+# --Process Noise Matrix value of Q --> sigma_a
+sigma_a : 10
+
+# %Avoiding Node Parameter
+# -- Kp_rel: Repulsive Gain, min_dist: minimum distance to detact object
+Kp_rel: 0.5
+min_dist: 0.8
+
+# --Hardware System for Accompany System
+wheel_radius: 10
+wheel_interval: 5
+base_range: 20
+weight: 15
+
+# --PID Gain Tuning
+max_err: 10
+kp: 0.5
+ki: 0.3

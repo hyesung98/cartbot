@@ -1,0 +1,11 @@
+Header Header
+float64 x
+float64 y
+float64 vx
+float64 vy
+cartbot/Cluster[] objects
+uint8 state
+uint8 LOST=0
+uint8 COUNT=1
+uint8 INIT=2
+uint8 TRACKING=3
