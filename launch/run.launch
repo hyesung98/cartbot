@@ -1,5 +1,7 @@
 <?xml version="1.0"?>
 <launch>
+    <param name="robot_description" command="$(find xacro)/xacro --inorder $(find cartbot)/config/xacro/cartbot.urdf.xacro"/>
+
     <rosparam command="load" file="$(find cartbot)/launch/param.yaml" />
 
     <node pkg="cartbot" type="clustering_node" name="clustering_node" output="screen" />

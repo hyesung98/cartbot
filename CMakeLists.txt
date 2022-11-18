@@ -174,6 +174,11 @@ src/kalman_filter.cpp
 add_executable(avoiding_node
 src/avoiding_node.cpp)
 
+# Serial Commnication
+add_executable(serial_node
+src/serial_node.cpp
+src/serialib.cpp)
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -185,6 +190,8 @@ src/avoiding_node.cpp)
 add_dependencies(clustering_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(tracking_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(avoiding_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(serial_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
 ## Specify libraries to link a library or executable target against
 
 # Object Clustering
@@ -195,6 +202,9 @@ target_link_libraries(tracking_node ${catkin_LIBRARIES} ${PCL_INCLUDE_DIRS} ${EI
 
 # Object Avoiding
 target_link_libraries(avoiding_node ${catkin_LIBRARIES} ${PCL_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR})
+
+# Serial Commnication
+target_link_libraries(serial_node ${catkin_LIBRARIES})
 #############
 ## Install ##
 #############
