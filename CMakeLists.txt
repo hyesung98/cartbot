@@ -64,7 +64,7 @@ add_message_files(
   FILES
   Cluster.msg
   ClusterArray.msg
-  Target.msg
+  Current.msg
 )
 
 ## Generate services in the 'srv' folder

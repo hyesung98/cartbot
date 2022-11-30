@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <param name="robot_description" command="$(find xacro)/xacro --inorder $(find cartbot)/xacro/robot1/cartbot.urdf.xacro"/>
+    <arg name= "pos_x" default = "0"/>
+    <arg name= "pos_y" default = "1"/>
+    <arg name= "pos_z" default = "0.3"/>
+    <arg name= "yaw" default = "0"/>
+    <arg name= "robot_name" default= "cartbot"/>
+
+    <!-- spawn the robot model-->
+    <node name="urdf_robot_model_spawner" pkg="gazebo_ros" type="spawn_model" args="-param robot_description
+	-urdf
+	-x $(arg pos_x)
+	-y $(arg pos_y)
+	-z $(arg pos_z)
+	-Y $(arg yaw)
+	-model $(arg robot_name)" respawn="false" output="screen" launch-prefix="bash -c 'sleep 1.0; $0 $@'" />
+
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen"/>
+</launch>

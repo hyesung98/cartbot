@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<launch>
+    <include file="$(find cartbot)/launch/gazebo.launch"/>
+    <group ns="robot_1">
+        <rosparam command="load" file="$(find cartbot)/config/param.yaml" />
+        <node pkg="cartbot" type="clustering_node" name="clustering_node" output="screen" />
+
+        <node pkg="cartbot" type="tracking_node" name="tracking_node" output="screen" />
+
+        <node pkg="cartbot" type="avoiding_node" name="avoiding_node" output="screen" />
+        <include file="$(find cartbot)/launch/spawn1.launch"/>
+        <include file="$(find cartbot)/launch/rviz.launch"/>
+    </group>
+
+     <group ns="robot_2">
+        <node pkg="rqt_robot_steering" type="rqt_robot_steering" name="rqt_robot_steering2" output="screen"/>
+        <include file="$(find cartbot)/launch/spawn2.launch"/>
+    </group>
+
+</launch>

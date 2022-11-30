@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<robot name="trackbot"
+    xmlns:xacro="http://ros.org/wiki/xacro">
+
+    <gazebo reference="body_link2">
+        <material>Gazebo/Red</material>
+    </gazebo>
+
+    <!-- left_wheel -->
+    <gazebo reference="wheel_left_link2">
+        <mu1>0.3</mu1>
+        <mu2>0.3</mu2>
+        <material>Gazebo/White</material>
+    </gazebo>
+
+    <!-- right_wheel -->
+    <gazebo reference="wheel_right_link2">
+        <mu1>0.3</mu1>
+        <mu2>0.3</mu2>
+        <material>Gazebo/White</material>
+    </gazebo>
+
+    <gazebo reference="caster_wheel_link2">
+        <mu1>0.1</mu1>
+        <mu2>0.1</mu2>
+        <material>Gazebo/White</material>
+    </gazebo>
+
+    <gazebo>
+        <plugin name="differential_drive_controller" filename="libgazebo_ros_diff_drive.so">
+            <commandTopic>cmd_vel2</commandTopic>
+            <odometryTopic>odom2</odometryTopic>
+            <odometryFrame>odom2</odometryFrame>
+            <odometrySource>world</odometrySource>
+            <publishOdomTF>true</publishOdomTF>
+            <robotBaseFrame>base_footprint2</robotBaseFrame>
+            <publishWheelTF>false</publishWheelTF>
+            <publishTf>true</publishTf>
+            <publishWheelJointState>true</publishWheelJointState>
+            <legacyMode>false</legacyMode>
+            <updateRate>30</updateRate>
+            <leftJoint>wheel_left_joint2</leftJoint>
+            <rightJoint>wheel_right_joint2</rightJoint>
+            <wheelSeparation>0.46</wheelSeparation>
+            <wheelDiameter>0.2</wheelDiameter>
+            <wheelAcceleration>1</wheelAcceleration>
+            <wheelTorque>50</wheelTorque>
+            <rosDebugLevel>na</rosDebugLevel>
+        </plugin>
+    </gazebo>
+</robot>

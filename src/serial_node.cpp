@@ -48,12 +48,21 @@ void setSpeed(serialib &serial, const uint8_t id, const uint8_t dir, const uint1
     serial.writeBytes(tx_buff, sizeof(tx_buff));
 }
 
+void getSpeed(serialib &serial)
+{
+    uint8_t rx_buff[12];
+    serial.readBytes(rx_buff, sizeof(rx_buff));
+    if(rx_buff[0] == HEADER1 && rx_buff[1] == HEADER2)
+    {
+    }
+}
+
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "serial_node");
     ros::NodeHandle nh;
     ros::Rate loop_rate(100);
-    if (serial.openDevice("/dev/ttyUSB0", 250000) != 1)
+    if (serial.openDevice("/dev/ttyUSB0", 9600) != 1)
     {
         ROS_ERROR_STREAM("Can not open Serial /dev/ttyUSB0");
         exit(0);
@@ -68,12 +77,6 @@ int main(int argc, char **argv)
         setSpeed(serial, 0, DIRECTION::CCW, 50);
         setSpeed(serial, 1, DIRECTION::CW, 50);
         requestFeedback(serial, 0, FEEDBACK::VELOCITY_FEEDBACK);
-        uint8_t rx_buff[12];
-        serial.readBytes(rx_buff, sizeof(rx_buff));
-        for (int i = 0; i < sizeof(rx_buff); i++)
-        {
-            std::cout << std::hex << (int)rx_buff[i] << ", ";
-        }
         std::cout << std::endl;
         loop_rate.sleep();
         ros::spinOnce();

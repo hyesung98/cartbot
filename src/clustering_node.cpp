@@ -1,8 +1,9 @@
 #include <cartbot/dbscan.h>
 #include <cartbot/utility.h>
+#include <cartbot/publish.h>
 ros::Subscriber sub;
 ros::Publisher vis_pub;
-ros::Publisher pt_pub;
+ros::Publisher point_pub;
 ros::Publisher text_pub;
 ros::Publisher cluster_pub;
 
@@ -139,7 +140,7 @@ void ScanCallback(const sensor_msgs::LaserScan::ConstPtr &scan_msg)
             cluster_list.Clusters.at(pt.clusterID - 1).points.push_back(gm_pt);
         }
     }
-    pt_pub.publish(cloud2cloudmsg(cluster_cloud));
+    point_pub.publish(cloud2cloudmsg(cluster_cloud));
 
     /* Center Point Average Processing */
     int id = 1;
@@ -203,6 +204,14 @@ void ScanCallback(const sensor_msgs::LaserScan::ConstPtr &scan_msg)
                 it_cluster->Header.stamp = ros::Time::now();
                 it_object->width = abs(max_x - min_x);
                 it_object->height = abs(max_y - min_y);
+                if(it_object->width < it_object->height)
+                {
+                    it_cluster->dist = it_object->width;
+                }
+                else
+                {
+                    it_cluster->dist = it_object->height;
+                }
                 it_object->dist = sqrt(pow(avg_x, 2) + pow(avg_y, 2));
                 it_cluster->mid_x = it_object->x = static_cast<float>(avg_x);
                 it_cluster->mid_y = it_object->y = static_cast<float>(avg_y);
@@ -223,7 +232,7 @@ int main(int argc, char **argv)
     ros::Rate loop_rate(10);
     ros::Subscriber lidar_sub = nh.subscribe<sensor_msgs::LaserScan>("/scan", 1, ScanCallback);
     vis_pub = nh.advertise<jsk_recognition_msgs::BoundingBoxArray>("/cluster/boxlist", 1);
-    pt_pub = nh.advertise<sensor_msgs::PointCloud2>("/cluster/cloud", 1);
+    point_pub = nh.advertise<sensor_msgs::PointCloud2>("/cluster/cloud", 1);
     text_pub = nh.advertise<visualization_msgs::MarkerArray>("/cluster/text", 1);
     cluster_pub = nh.advertise<cartbot::ClusterArray>("/cluster/clusterarray", 1);
     if(!getParameter(nh))

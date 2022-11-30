@@ -1,10 +1,11 @@
 #include <cartbot/utility.h>
+#include <cartbot/publish.h>
 #include <cartbot/kalman_filter.h>
 
 ros::Publisher x_comp_pub[4];
 ros::Publisher y_comp_pub[4];
 ros::Publisher estimate_pub;
-ros::Publisher target_pub;
+ros::Publisher current_pub;
 ros::Time pre_time;
 
 /* Kalman Filter Variable */
@@ -111,54 +112,10 @@ bool getParameter(ros::NodeHandle &nh)
     return true;
 }
 
-void publishPlot(const double mx, // measurement distance
-                 const double my,
-                 const double ex, // estimation distance
-                 const double ey,
-                 const double mvx, // measurement velocity
-                 const double mvy,
-                 const double evx, // estimation velocity
-                 const double evy)
-{
-    std_msgs::Float64 x_comp[4], y_comp[4];
-    x_comp[0].data = mx;
-    y_comp[0].data = my;
-    x_comp[1].data = ex;
-    y_comp[1].data = ey;
-    x_comp[2].data = mvx;
-    y_comp[2].data = mvy;
-    x_comp[3].data = evx;
-    y_comp[3].data = evy;
-    for (std::size_t i = 0; i < 4; i++)
-    {
-        x_comp_pub[i].publish(x_comp[i]);
-        y_comp_pub[i].publish(y_comp[i]);
-    }
-}
-
-void publishEstimationBox(const float &x, const float &y, const int &state) // Observation Boudary Box
-{
-    jsk_recognition_msgs::BoundingBox box;
-    box.header.frame_id = "laser_frame";
-    box.header.stamp = ros::Time::now();
-    if (state == TRACKING)
-        box.label = 4;
-    else
-        box.label = 2;
-    box.dimensions.x = 0.5;
-    box.dimensions.y = 0.5;
-    box.dimensions.z = 0.01;
-    box.pose.position.x = x;
-    box.pose.position.y = y;
-    box.pose.position.z = 0;
-    box.value = 4;
-    estimate_pub.publish(box);
-}
-
 double evaluateMeasurement(Estimation e, const double &x, const double &y, const double &dt)
 {
     double error_x, error_y;
-    double estimate_mx = e.pos[X] + e.vel[Y] * dt;
+    double estimate_mx = e.pos[X] + e.vel[X] * dt;
     double estimate_my = e.pos[Y] + e.vel[Y] * dt;
     error_x = abs(x - estimate_mx);
     error_y = abs(y - estimate_my);
@@ -168,17 +125,17 @@ double evaluateMeasurement(Estimation e, const double &x, const double &y, const
 void clusterlistCallback(const cartbot::ClusterArray::ConstPtr &clusterlist)
 {
     cartbot::ClusterArray objectlist;
-    cartbot::Target target;
+    cartbot::Current current;
     switch (state)
     {
     case LOST:
     {
         ROS_INFO("STATE----> OBJECT_LOST");
-        target.state = state;
+        current.state = state;
         for (auto cluster : clusterlist->Clusters)
         {
             float dist = sqrt(pow(cluster.mid_x, 2) + pow(cluster.mid_y, 2));
-            if (dist < dist_threshold)
+            if (abs(dist) < dist_threshold)
             {
                 init_cnt = 0;
                 init_time = ros::Time::now();
@@ -193,16 +150,16 @@ void clusterlistCallback(const cartbot::ClusterArray::ConstPtr &clusterlist)
     case COUNT:
     {
         ROS_INFO("STATE----> TIME_COUNTING");
-        target.state = state;
+        current.state = state;
         islost = true;
         for (auto cluster : clusterlist->Clusters)
         {
             float dist = sqrt(pow(init_x - cluster.mid_x, 2) + pow(init_y - cluster.mid_y, 2));
-            if (dist < min_range)
+            if (abs(dist) < min_range)
             {
                 ros::Duration duration_t = ros::Time::now() - init_time;
                 init_cnt += duration_t.toSec();
-                publishEstimationBox(cluster.mid_x, cluster.mid_y, state);
+                publishEstimationBox(estimate_pub, cluster.mid_x, cluster.mid_y, state);
                 islost = false;
                 break;
             }
@@ -220,28 +177,28 @@ void clusterlistCallback(const cartbot::ClusterArray::ConstPtr &clusterlist)
     case INIT:
     {
         ROS_INFO("STATE----> TRACKING_INITIALIZATION");
-        target.state = state;
+        current.state = state;
         islost = true;
         for (auto cluster : clusterlist->Clusters)
         {
             float dist = sqrt(pow(init_x - cluster.mid_x, 2) + pow(init_y - cluster.mid_y, 2));
-            if (dist < min_range)
+            if (abs(dist) < min_range)
             {
                 Eigen::VectorXd xn(4);
                 updateEstimation(e, cluster.mid_x, cluster.mid_y, 0, 0);
                 updateMeasurement(m, e.pos[X], e.pos[Y], 0.5);
                 pre_time = cluster.Header.stamp;
-                xn << e.pos[Y], e.pos[Y], 0, 0;
-                target.x = e.pos[X];
-                target.y = e.pos[Y];
+                xn << e.pos[X], e.pos[Y], 0, 0;
+                current.x = e.pos[X];
+                current.y = e.pos[Y];
                 kf.initValue(xn);
-                publishEstimationBox(e.pos[X], e.pos[Y], state);
+                publishEstimationBox(estimate_pub, e.pos[X], e.pos[Y], state);
                 state = TRACKING;
                 islost = false;
             }
             else
             {
-                target.objects.push_back(cluster);
+                current.objects.push_back(cluster);
             }
         }
         if (islost)
@@ -253,13 +210,13 @@ void clusterlistCallback(const cartbot::ClusterArray::ConstPtr &clusterlist)
     case TRACKING:
     {
         ROS_INFO("STATE----> TRACKING");
-        target.state = state;
+        current.state = state;
         islost = true;
         std::vector<cartbot::Cluster> measure_list;
         for (auto cluster : clusterlist->Clusters)
         {
             float dist = sqrt(pow(cluster.mid_x - e.pos[X], 2) + pow(cluster.mid_y - e.pos[Y], 2));
-            if (dist < min_range)
+            if (abs(dist) < 1.0)
             {
                 measure_list.push_back(cluster);
                 islost = false;
@@ -267,7 +224,7 @@ void clusterlistCallback(const cartbot::ClusterArray::ConstPtr &clusterlist)
             }
             else
             {
-                target.objects.push_back(cluster);
+                current.objects.push_back(cluster);
             }
         }
 
@@ -302,15 +259,16 @@ void clusterlistCallback(const cartbot::ClusterArray::ConstPtr &clusterlist)
             kf.updateTime(dt);
             kf.processKalmanFilter(z);
             updateEstimation(e, kf.getPosX(), kf.getPosY(), kf.getVelX(), kf.getVelY());
-            target.Header.stamp = now_time;
-            target.x = e.pos[X];
-            target.y = e.pos[Y];
-            target.vx = e.vel[X];
-            target.vy = e.vel[Y];
+            current.Header.stamp = now_time;
+            current.x = e.pos[X];
+            current.y = e.pos[Y];
+            current.vx = e.vel[X];
+            current.vy = e.vel[Y];
 
-            publishPlot(m.now_pos[X], m.now_pos[Y], e.pos[X], e.pos[Y],
+            publishPlot(x_comp_pub, y_comp_pub,
+                        m.now_pos[X], m.now_pos[Y], e.pos[X], e.pos[Y],
                         m.now_vel[X], m.now_vel[Y], e.vel[X], e.vel[Y]);
-            publishEstimationBox(e.pos[X], e.pos[Y], state);
+            publishEstimationBox(estimate_pub, e.pos[X], e.pos[Y], state);
             pre_time = now_time;
         }
         else
@@ -325,7 +283,7 @@ void clusterlistCallback(const cartbot::ClusterArray::ConstPtr &clusterlist)
         break;
     }
     }
-    target_pub.publish(target);
+    current_pub.publish(current);
 }
 
 int main(int argc, char **argv)
@@ -339,7 +297,7 @@ int main(int argc, char **argv)
 
     ros::Subscriber clusterlist_sub = nh.subscribe<cartbot::ClusterArray>("/cluster/clusterarray", 1, clusterlistCallback);
     estimate_pub = nh.advertise<jsk_recognition_msgs::BoundingBox>(node_str + "/estimation_box", 1);
-    target_pub = nh.advertise<cartbot::Target>(node_str + "/target", 1);
+    current_pub = nh.advertise<cartbot::Current>(node_str + "/current", 1);
 
     for (std::size_t i = 0; i < 4; i++)
     {
