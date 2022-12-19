@@ -1,0 +1,2 @@
+uint16 enc_cnt_l
+uint16 enc_cnt_r

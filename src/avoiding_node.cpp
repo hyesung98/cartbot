@@ -1,7 +1,7 @@
 #include <cartbot/utility.h>
 #include <cartbot/publish.h>
 
-ros::Publisher vel_pub, target_pub, marker_arr_pub;
+ros::Publisher vel_pub, target_pub, marker_arr_pub, speed_pub;
 visualization_msgs::MarkerArray marker_arr;
 
 /* PID Variable */
@@ -9,8 +9,6 @@ double err_x = 0, err_y = 0;
 double target_x, target_y;
 
 /* Potential Field Variable */
-double vrep_x = 0, vrep_y = 0;
-double vatt_x = 0, vatt_y = 0;
 double vpot_x = 0, vpot_y = 0;
 
 /* ROS Parameter Variable*/
@@ -71,10 +69,10 @@ std::pair<double, double> calcAccompanySystem(const cartbot::Current::ConstPtr &
     e_x = t_x - current->x;
     e_y = t_y - current->y;
 
-    if (abs(e_x) < 0.13)
+    if (abs(e_x) < 0.05)
         e_x = 0;
 
-    if (abs(e_y) < 0.13)
+    if (abs(e_y) < 0.05)
         e_y = 0;
 
     err_x += e_x;
@@ -106,7 +104,7 @@ std::pair<double, double> calcAccompanySystem(const cartbot::Current::ConstPtr &
     return vel_vector;
 }
 
-std::pair<double, double> calcAdvacnedAccompanySystem(const cartbot::Current::ConstPtr &current, const double &dt, const double &vx, const double &vy, const double &omega, double &t_x, double &t_y)
+std::pair<double, double> calcAdvacnedAccompanySystem(const cartbot::Current::ConstPtr &current, const double &dt, const double &vx, const double &vy, const double &omega, double t_x, double t_y)
 {
     std::pair<double, double> vel_vector;
     double x0, y0, r, r_dot, theta, theta_dot, phi, err_theta;
@@ -180,40 +178,6 @@ std::pair<double, double> calcAdvacnedAccompanySystem(const cartbot::Current::Co
     return vel_vector;
 }
 
-std::pair<double, double> calcObstacleVelocity(const double vx, std::vector<cartbot::Cluster> objectlist, const double c)
-{
-    std::pair<double, double> vel_vector(0, 0);
-    int cnt = 0;
-    for (auto &object : objectlist)
-    {
-        for (auto &point : object.points)
-        {
-            if (point.x > 0)
-            {
-                double r, theta;
-                r = sqrt(pow(point.x, 2) + pow(point.y, 2));
-                if (r < min_dist)
-                {
-                    theta = atan2(point.y, point.x);
-                    vel_vector.first += vx * -1;
-                    vel_vector.second += vx * tan(theta) * -1;
-                    cnt++;
-                }
-            }
-        }
-    }
-    if (abs(vel_vector.first) > 0)
-    {
-        vel_vector.first = vel_vector.first / cnt * c;
-    }
-    if (abs(vel_vector.second) > 0)
-    {
-        vel_vector.second = vel_vector.second / cnt * c;
-    }
-
-    return vel_vector;
-}
-
 std::pair<double, double> calcRepulsivePotentialField(const double &x, const double &y, std::vector<cartbot::Cluster> objectlist)
 {
     std::pair<double, double> force_vector(0, 0);
@@ -221,14 +185,17 @@ std::pair<double, double> calcRepulsivePotentialField(const double &x, const dou
     {
         for (auto &point : object.points)
         {
-            double dist, dist_x, dist_y;
-            dist = abs(sqrt(pow(point.x - x, 2) + pow(point.y - y, 2)));
-            dist_x = point.x - x;
-            dist_y = point.y - y;
-            if (min_dist >= dist)
+            if (point.x > 0.0)
             {
-                force_vector.first -= Kp_rel * (1 / dist - 1 / min_dist) * (1 / pow(dist, 2)) * (dist_x / dist);  // x_repulsive
-                force_vector.second -= Kp_rel * (1 / dist - 1 / min_dist) * (1 / pow(dist, 2)) * (dist_y / dist); // y_repulsive
+                double dist, dist_x, dist_y;
+                dist = abs(sqrt(pow(point.x - x, 2) + pow(point.y - y, 2)));
+                dist_x = point.x - x;
+                dist_y = point.y - y;
+                if (min_dist / 2 >= dist)
+                {
+                    force_vector.first -= Kp_rel * (1 / dist - 1 / min_dist) * (1 / pow(dist, 2)) * (dist_x / dist);  // x_repulsive
+                    force_vector.second -= Kp_rel * (1 / dist - 1 / min_dist) * (1 / pow(dist, 2)) * (dist_y / dist); // y_repulsive
+                }
             }
         }
     }
@@ -247,10 +214,31 @@ std::pair<double, double> calcAttractivePotentialField(const double &tx, const d
     return force_vector;
 }
 
+bool isObstacleNear(const std::vector<cartbot::Cluster> objectlist)
+{
+    unsigned int object_cnt = 0;
+    ROS_INFO("object num = %d", objectlist.size());
+    for (auto &object : objectlist)
+    {
+        for (auto &point : object.points)
+        {
+            if (point.x > base_range / -1.7)
+            {
+                double dist, dist_x, dist_y;
+                dist = abs(sqrt(pow(point.x, 2) + pow(point.y, 2)));
+                if (min_dist >= dist)
+                    return true;
+            }
+        }
+    }
+    return false;
+}
+
 void currentCallback(const cartbot::Current::ConstPtr &current)
 {
     std::pair<double, double> vel_vector, rep_force, att_force;
     geometry_msgs::Twist cmd_vel;
+    cartbot::Speed speed;
     uint8_t state = current->state;
     double w_r, w_l;
     marker_arr.markers.clear();
@@ -260,6 +248,8 @@ void currentCallback(const cartbot::Current::ConstPtr &current)
         err_y = 0;
         v_x = 0;
         v_y = 0;
+        vpot_x = 0;
+        vpot_y = 0;
     }
     if (state == cartbot::Current::INIT)
     {
@@ -309,128 +299,125 @@ void currentCallback(const cartbot::Current::ConstPtr &current)
         vx = (wheel_radius / wheel_interval) * wheel_interval / 2 * (w_r + w_l);
         vy = base_range * omega;
 
-        /* Accompany System */
-        if (isadvanced == true)
-            vel_vector = calcAdvacnedAccompanySystem(current, dt, vx, vy, omega, target_x, target_y);
+        if (isObstacleNear(current->objects) == true)
+        {
+            if (target_x > 0)
+            {
+                const double r = sqrt(pow(target_x, 2) + pow(target_y, 2)) / 1.5;
+                /* Accompany System */
+                if (isadvanced == true)
+                {
+                    vel_vector = calcAdvacnedAccompanySystem(current, dt, vx, vy, omega, r, 0);
+                }
+                else
+                {
+                    vel_vector = calcAccompanySystem(current, r, 0);
+                    publishTargetLine(target_pub, 0, 0, r, 0);
+                }
+            }
+        }
         else
-            vel_vector = calcAccompanySystem(current, target_x, target_y);
+        {
+            /* Accompany System */
+            if (isadvanced == true)
+            {
+                vel_vector = calcAdvacnedAccompanySystem(current, dt, vx, vy, omega, target_x, target_y);
+            }
+            else
+            {
+                vel_vector = calcAccompanySystem(current, target_x, target_y);
+                publishTargetLine(target_pub, 0, 0, target_x, target_y);
+            }
+        }
 
         /* Repulsive Potential Field */
-        // rep_force = calcRepulsivePotentialField(0, 0, current->objects);
-        // att_force = calcAttractivePotentialField(current->x, current->y, target_x, target_y);
+        rep_force = calcRepulsivePotentialField(0, 0, current->objects);
+        att_force = calcAttractivePotentialField(current->x, current->y, target_x, 0);
 
-        // vrep_x += rep_force.first / weight;
-        // vrep_y += rep_force.second / weight;
+        if (abs(rep_force.first) > 0)
+            vpot_x += rep_force.first + att_force.first / weight;
+        if (abs(rep_force.second) > 0)
+            vpot_y += rep_force.second + att_force.second / weight;
 
-        // vatt_x += att_force.first / weight;
-        // vatt_y += att_force.second / weight;
+        if (abs(vpot_x) > 1.0)
+        {
+            if (vpot_x > 0)
+                vpot_x = 1.0;
+            else
+                vpot_x = -1.0;
+        }
+        if (abs(vpot_y) > 1.0)
+        {
+            if (vpot_y > 0)
+                vpot_y = 1.0;
+            else
+                vpot_y = -1.0;
+        }
 
-        // if (abs(vrep_x) > abs(vx))
-        // {
-        //     if (vrep_x > 0)
-        //         vrep_x = abs(vx);
-        //     else
-        //         vrep_x = -abs(vx);
-        // }
-        // if (abs(vrep_y) > 1.0)
-        // {
-        //     if (vrep_y > 0)
-        //         vrep_y = 1.0;
-        //     else
-        //         vrep_y = -1.0;
-        // }
+        if (abs(vpot_x) > 0)
+        {
+            if (vpot_x < 0)
+            {
+                vpot_x += u_k * weight;
+                if (vpot_x > 0)
+                    vpot_x = 0;
+            }
+            else
+            {
+                vpot_x -= u_k * weight;
+                if (vpot_x < 0)
+                    vpot_x = 0;
+            }
+        }
+        if (abs(vpot_y) > 0)
+        {
+            if (vpot_y < 0)
+            {
+                vpot_y += u_k * weight;
+                if (vpot_y > 0)
+                    vpot_y = 0;
+            }
+            else
+            {
+                vpot_y -= u_k * weight;
+                if (vpot_y < 0)
+                    vpot_y = 0;
+            }
+        }
 
-        // if (abs(vrep_x) > 0)
-        // {
-        //     if (vrep_x < 0)
-        //     {
-        //         vrep_x += u_k * weight;
-        //         if (vrep_x > 0)
-        //             vrep_x = 0;
-        //     }
-        //     else
-        //     {
-        //         vrep_x -= u_k * weight;
-        //         if (vrep_x < 0)
-        //             vrep_x = 0;
-        //     }
-        // }
-        // if (abs(vrep_y) > 0)
-        // {
-        //     if (vrep_y < 0)
-        //     {
-        //         vrep_y += u_k * weight;
-        //         if (vrep_y > 0)
-        //             vrep_y = 0;
-        //     }
-        //     else
-        //     {
-        //         vrep_y -= u_k * weight;
-        //         if (vrep_y < 0)
-        //             vrep_y = 0;
-        //     }
-        // }
-
-        // if (abs(vatt_x) > 0)
-        // {
-        //     if (vrep_x < 0)
-        //     {
-        //         vatt_x += u_k * weight;
-        //         if (vatt_x > 0)
-        //             vatt_x = 0;
-        //     }
-        //     else
-        //     {
-        //         vatt_x -= u_k * weight;
-        //         if (vatt_x < 0)
-        //             vatt_x = 0;
-        //     }
-        // }
-        // if (abs(vatt_y) > 0)
-        // {
-        //     if (vatt_y < 0)
-        //     {
-        //         vatt_y += u_k * weight;
-        //         if (vatt_y > 0)
-        //             vatt_y = 0;
-        //     }
-        //     else
-        //     {
-        //         vatt_y -= u_k * weight;
-        //         if (vatt_y < 0)
-        //             vatt_y = 0;
-        //     }
-        // }
-
-        // vpot_x = vatt_x + vrep_x;
-        // vpot_y = vatt_y + vrep_y;
-        publishForceVector(marker_arr, rep_force.first, rep_force.second);
+        publishForceVector(marker_arr, rep_force.first + att_force.first, rep_force.second + att_force.second);
         /* Gazebo Sumulation geometry/twist msgs */
 
-        // if (abs(vrep_x) > 0)
+        // if (abs(rep_force.first) > 0)
         //     v_x = vel_vector.first + vpot_x;
         // else
         v_x = vel_vector.first;
-        // if (abs(vrep_y) > 0)
+        // if (abs(rep_force.second) > 0)
         //     v_y = vel_vector.second + vpot_y;
         // else
         v_y = vel_vector.second;
-        // ROS_INFO("vrep_x = %f", vrep_x);
-        // ROS_INFO("vrep_y = %f", vrep_y);
+        // ROS_INFO("vrep_x = %f", rep_force.first);
+        // ROS_INFO("vrep_y = %f", rep_force.second);
         // ROS_INFO("vatt_x = %f", att_force.first);
         // ROS_INFO("vatt_y = %f", att_force.second);
-        ROS_INFO("v_x = %f", vel_vector.first);
-        ROS_INFO("v_y = %f", vel_vector.second);
+        // ROS_INFO("v_x = %f", vel_vector.first);
+        // ROS_INFO("v_y = %f", vel_vector.second);
 
         pre_time = now_time;
         pre_pos_r = now_pos_r;
         pre_pos_l = now_pos_l;
     }
-    cmd_vel.linear.x = v_x;
-    cmd_vel.angular.z = v_y / base_range;
+    // cmd_vel.linear.x = v_x;
+    // cmd_vel.angular.z = v_y / base_range;
+
+    w_l = (1 / wheel_radius) * v_x - ((wheel_interval / 2.0) / (wheel_radius * base_range)) * v_y;
+    w_r = (1 / wheel_radius) * v_x + ((wheel_interval / 2.0) / (wheel_radius * base_range)) * v_y;
+    speed.tar_rpm_l = static_cast<int>(RAD2RPM(w_l));
+    speed.tar_rpm_r = static_cast<int>(RAD2RPM(w_r));
     if (marker_arr.markers.size() > 0)
         marker_arr_pub.publish(marker_arr);
     vel_pub.publish(cmd_vel);
+    speed_pub.publish(speed);
 }
 
 void encoderCallback(const sensor_msgs::JointState::ConstPtr &joint)
@@ -448,6 +435,7 @@ int main(int argc, char **argv)
     marker_arr_pub = nh.advertise<visualization_msgs::MarkerArray>("/avoid/marker_array", 1);
     target_pub = nh.advertise<visualization_msgs::Marker>("/avoid/target", 1);
     vel_pub = nh.advertise<geometry_msgs::Twist>("cmd_vel1", 1);
+    speed_pub = nh.advertise<cartbot::Speed>("avoid/speed", 1);
     if (!getParameter(nh))
     {
         ROS_ERROR_STREAM("Check avoiding node parameter");

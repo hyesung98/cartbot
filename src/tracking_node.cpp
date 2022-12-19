@@ -117,8 +117,8 @@ double evaluateMeasurement(Estimation e, const double &x, const double &y, const
     double error_x, error_y;
     double estimate_mx = e.pos[X] + e.vel[X] * dt;
     double estimate_my = e.pos[Y] + e.vel[Y] * dt;
-    error_x = abs(x - estimate_mx);
-    error_y = abs(y - estimate_my);
+    error_x = pow(abs(x - estimate_mx), 2);
+    error_y = pow(abs(y - estimate_my), 2);
     return error_x + error_y;
 }
 
@@ -155,12 +155,14 @@ void clusterlistCallback(const cartbot::ClusterArray::ConstPtr &clusterlist)
         for (auto cluster : clusterlist->Clusters)
         {
             float dist = sqrt(pow(init_x - cluster.mid_x, 2) + pow(init_y - cluster.mid_y, 2));
-            if (abs(dist) < min_range)
+            if (abs(dist) < 0.5)
             {
                 ros::Duration duration_t = ros::Time::now() - init_time;
                 init_cnt += duration_t.toSec();
                 publishEstimationBox(estimate_pub, cluster.mid_x, cluster.mid_y, state);
                 islost = false;
+                init_x = cluster.mid_x;
+                init_y = cluster.mid_y;
                 break;
             }
         }
@@ -185,13 +187,13 @@ void clusterlistCallback(const cartbot::ClusterArray::ConstPtr &clusterlist)
             if (abs(dist) < min_range)
             {
                 Eigen::VectorXd xn(4);
+                pre_time = cluster.Header.stamp;
+                xn << cluster.mid_x, cluster.mid_y, 0, 0;
+                kf.initValue(xn);
+                current.x = cluster.mid_x;
+                current.y = cluster.mid_y;
                 updateEstimation(e, cluster.mid_x, cluster.mid_y, 0, 0);
                 updateMeasurement(m, e.pos[X], e.pos[Y], 0.5);
-                pre_time = cluster.Header.stamp;
-                xn << e.pos[X], e.pos[Y], 0, 0;
-                current.x = e.pos[X];
-                current.y = e.pos[Y];
-                kf.initValue(xn);
                 publishEstimationBox(estimate_pub, e.pos[X], e.pos[Y], state);
                 state = TRACKING;
                 islost = false;
@@ -216,7 +218,7 @@ void clusterlistCallback(const cartbot::ClusterArray::ConstPtr &clusterlist)
         for (auto cluster : clusterlist->Clusters)
         {
             float dist = sqrt(pow(cluster.mid_x - e.pos[X], 2) + pow(cluster.mid_y - e.pos[Y], 2));
-            if (abs(dist) < 1.0)
+            if (abs(dist) < 0.5)
             {
                 measure_list.push_back(cluster);
                 islost = false;
@@ -241,6 +243,7 @@ void clusterlistCallback(const cartbot::ClusterArray::ConstPtr &clusterlist)
                     error.push_back(evaluateMeasurement(e, measure.mid_x, measure.mid_y, dt));
                 }
                 double tmp_err = 100.0;
+                m_idx = 0;
                 for (size_t idx = 0; idx < error.size(); idx++) // find minimum error
                 {
                     if (tmp_err > error.at(idx))
@@ -250,10 +253,17 @@ void clusterlistCallback(const cartbot::ClusterArray::ConstPtr &clusterlist)
                     }
                 }
             }
+            for (std::size_t i = 0 ; i < measure_list.size() ; i++)
+            {
+                if(i != m_idx)
+                    current.objects.push_back(measure_list[i]);
+            }
             ros::Time now_time = measure_list[m_idx].Header.stamp;
             ros::Duration duration_t = now_time - pre_time;
             const double dt = duration_t.toSec();
             updateMeasurement(m, measure_list[m_idx].mid_x, measure_list[m_idx].mid_y, dt);
+
+            /* Kalman Filter Processing */
             Eigen::VectorXd z(4);
             z << m.now_pos[X], m.now_pos[Y], m.now_vel[X], m.now_vel[Y];
             kf.updateTime(dt);
@@ -276,7 +286,7 @@ void clusterlistCallback(const cartbot::ClusterArray::ConstPtr &clusterlist)
             lost_cnt++;
         }
 
-        if (lost_cnt > 10)
+        if (lost_cnt > 7)
         {
             state = LOST;
         }

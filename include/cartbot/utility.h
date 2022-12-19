@@ -21,12 +21,15 @@
 #include <jsk_recognition_msgs/BoundingBoxArray.h>
 #include <jsk_recognition_msgs/BoundingBox.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <cartbot/Encoder.h>
+#include <cartbot/Speed.h>
 #include <cartbot/Cluster.h>
 #include <cartbot/ClusterArray.h>
 #include <cartbot/Current.h>
 // Math function define
 #define RAD2DEG(rad) rad *(180 / M_PI)
 #define DEG2RAD(deg) deg * 174533e-07
+#define RAD2RPM(rad) rad * 9.549297
 #define COS cos
 #define SIN sin
 
