@@ -62,9 +62,11 @@ find_package(Eigen3 REQUIRED)
 add_message_files(
   DIRECTORY msg
   FILES
+  Speed.msg
   Cluster.msg
   ClusterArray.msg
   Current.msg
+  Encoder.msg
 )
 
 ## Generate services in the 'srv' folder
