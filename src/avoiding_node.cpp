@@ -12,10 +12,13 @@ double target_x, target_y;
 double vpot_x = 0, vpot_y = 0;
 
 /* ROS Parameter Variable*/
+bool is_simulation;
 double Kp_rel, Kp_att;
 double min_dist, u_k;
 double weight, wheel_radius, wheel_interval, base_range;
 double max_err_x, max_err_y, kp_x, kp_y, ki_x, ki_y;
+double avoid_time;
+double target_r;
 bool isadvanced;
 
 /* Advanced Accompny System Variable*/
@@ -24,8 +27,13 @@ double pre_pos_l, pre_pos_r, now_pos_l, now_pos_r;
 double v_x, v_y;
 ros::Time pre_time;
 
+double avoid_cnt, change_cnt = 0;
+bool change_flag = false;
+
 bool getParameter(ros::NodeHandle &nh)
 {
+    if (!nh.getParam("is_simulation", is_simulation))
+        return false;
     if (!nh.getParam("Kp_rel", Kp_rel))
         return false;
     if (!nh.getParam("Kp_att", Kp_att))
@@ -56,7 +64,10 @@ bool getParameter(ros::NodeHandle &nh)
         return false;
     if (!nh.getParam("u_k", u_k))
         return false;
-
+    if (!nh.getParam("avoid_time", avoid_time))
+        return false;
+    if (!nh.getParam("target_r", target_r))
+        return false;
     return true;
 }
 
@@ -92,8 +103,16 @@ std::pair<double, double> calcAccompanySystem(const cartbot::Current::ConstPtr &
         else
             err_y = -max_err_y;
     }
-    c_x = kp_x * e_x + ki_x * err_x;
-    c_y = kp_y * e_y + ki_y * err_y;
+    if (!change_flag)
+    {
+        c_x = kp_x * e_x + ki_x * err_x;
+        c_y = kp_y * e_y + ki_y * err_y;
+    }
+    else
+    {
+        c_x = kp_x / 1.2 * e_x + ki_x * err_x;
+        c_y = kp_y / 1.2 * e_y + ki_y * err_y;
+    }
 
     vel_vector.second = -(base_range / (base_range + t_x)) * c_y;
     vel_vector.first = -c_x + (t_y / base_range) * vel_vector.second;
@@ -242,7 +261,7 @@ void currentCallback(const cartbot::Current::ConstPtr &current)
     uint8_t state = current->state;
     double w_r, w_l;
     marker_arr.markers.clear();
-    if (state == cartbot::Current::LOST)
+    if (state == cartbot::Current::LOST || state == cartbot::Current::STOP)
     {
         err_x = 0;
         err_y = 0;
@@ -301,9 +320,34 @@ void currentCallback(const cartbot::Current::ConstPtr &current)
 
         if (isObstacleNear(current->objects) == true)
         {
+            if (avoid_cnt == 0)
+                change_flag = true;
+            avoid_cnt = avoid_time;
+        }
+        else
+        {
+            avoid_cnt -= dt;
+            if (0 < avoid_cnt && avoid_cnt < 1.5)
+                change_flag = true;
+            if (avoid_cnt < 0)
+                avoid_cnt = 0;
+        }
+
+        if (change_flag == true)
+        {
+            change_cnt += dt;
+            if (change_cnt > 3.0)
+            {
+                change_flag = false;
+                change_cnt = 0;
+            }
+        }
+
+        if (avoid_cnt > 0)
+        {
             if (target_x > 0)
             {
-                const double r = sqrt(pow(target_x, 2) + pow(target_y, 2)) / 1.5;
+                const double r = target_r;
                 /* Accompany System */
                 if (isadvanced == true)
                 {
@@ -330,7 +374,7 @@ void currentCallback(const cartbot::Current::ConstPtr &current)
             }
         }
 
-        /* Repulsive Potential Field */
+        /* Potential Field */
         rep_force = calcRepulsivePotentialField(0, 0, current->objects);
         att_force = calcAttractivePotentialField(current->x, current->y, target_x, 0);
 
@@ -386,38 +430,43 @@ void currentCallback(const cartbot::Current::ConstPtr &current)
         }
 
         publishForceVector(marker_arr, rep_force.first + att_force.first, rep_force.second + att_force.second);
-        /* Gazebo Sumulation geometry/twist msgs */
-
-        // if (abs(rep_force.first) > 0)
-        //     v_x = vel_vector.first + vpot_x;
-        // else
-        v_x = vel_vector.first;
-        // if (abs(rep_force.second) > 0)
-        //     v_y = vel_vector.second + vpot_y;
-        // else
-        v_y = vel_vector.second;
-        // ROS_INFO("vrep_x = %f", rep_force.first);
-        // ROS_INFO("vrep_y = %f", rep_force.second);
-        // ROS_INFO("vatt_x = %f", att_force.first);
-        // ROS_INFO("vatt_y = %f", att_force.second);
-        // ROS_INFO("v_x = %f", vel_vector.first);
-        // ROS_INFO("v_y = %f", vel_vector.second);
+        if (current->lost_cnt > 0)
+        {
+            v_x = 0;
+            v_y = 0;
+        }
+        else
+        {
+            if (abs(rep_force.first) > 0)
+                v_x = vel_vector.first + vpot_x;
+            else
+                v_x = vel_vector.first;
+            if (abs(rep_force.second) > 0)
+                v_y = vel_vector.second + vpot_y;
+            else
+                v_y = vel_vector.second;
+        }
 
         pre_time = now_time;
         pre_pos_r = now_pos_r;
         pre_pos_l = now_pos_l;
     }
-    // cmd_vel.linear.x = v_x;
-    // cmd_vel.angular.z = v_y / base_range;
-
-    w_l = (1 / wheel_radius) * v_x - ((wheel_interval / 2.0) / (wheel_radius * base_range)) * v_y;
-    w_r = (1 / wheel_radius) * v_x + ((wheel_interval / 2.0) / (wheel_radius * base_range)) * v_y;
-    speed.tar_rpm_l = static_cast<int>(RAD2RPM(w_l));
-    speed.tar_rpm_r = static_cast<int>(RAD2RPM(w_r));
+    if (is_simulation) /* Gazebo Sumulation geometry/twist msgs */
+    {
+        cmd_vel.linear.x = v_x;
+        cmd_vel.angular.z = v_y / base_range;
+        vel_pub.publish(cmd_vel);
+    }
+    else
+    {
+        w_l = (1 / wheel_radius) * v_x - ((wheel_interval / 2.0) / (wheel_radius * base_range)) * v_y;
+        w_r = (1 / wheel_radius) * v_x + ((wheel_interval / 2.0) / (wheel_radius * base_range)) * v_y;
+        speed.tar_rpm_l = static_cast<int>(RAD2RPM(w_l));
+        speed.tar_rpm_r = static_cast<int>(RAD2RPM(w_r));
+        speed_pub.publish(speed);
+    }
     if (marker_arr.markers.size() > 0)
         marker_arr_pub.publish(marker_arr);
-    vel_pub.publish(cmd_vel);
-    speed_pub.publish(speed);
 }
 
 void encoderCallback(const sensor_msgs::JointState::ConstPtr &joint)
@@ -430,17 +479,20 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "avoiding_node");
     ros::NodeHandle nh;
-    ros::Subscriber target_sub = nh.subscribe<cartbot::Current>("/track/current", 1, currentCallback);
-    ros::Subscriber joint_sub = nh.subscribe<sensor_msgs::JointState>("/robot_1/joint_states", 1, encoderCallback);
-    marker_arr_pub = nh.advertise<visualization_msgs::MarkerArray>("/avoid/marker_array", 1);
-    target_pub = nh.advertise<visualization_msgs::Marker>("/avoid/target", 1);
-    vel_pub = nh.advertise<geometry_msgs::Twist>("cmd_vel1", 1);
-    speed_pub = nh.advertise<cartbot::Speed>("avoid/speed", 1);
     if (!getParameter(nh))
     {
         ROS_ERROR_STREAM("Check avoiding node parameter");
         exit(0);
     }
-    ROS_INFO("\033----> Accompany System & Potential Field Started.\033");
+    if (is_simulation)
+        vel_pub = nh.advertise<geometry_msgs::Twist>("cmd_vel1", 1);
+    else
+        speed_pub = nh.advertise<cartbot::Speed>("avoid/speed", 1);
+    ros::Subscriber target_sub = nh.subscribe<cartbot::Current>("/track/current", 1, currentCallback);
+    ros::Subscriber joint_sub = nh.subscribe<sensor_msgs::JointState>("/robot_1/joint_states", 1, encoderCallback);
+    marker_arr_pub = nh.advertise<visualization_msgs::MarkerArray>("/avoid/marker_array", 1);
+    target_pub = nh.advertise<visualization_msgs::Marker>("/avoid/target", 1);
+
+    ROS_INFO("\033----> Avoiding Node Started.\033");
     ros::spin();
 }
