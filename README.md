@@ -3,9 +3,9 @@
 ## 1. Overview
 
 This package is based on **Kalman filter** and **Adaptive Epsilon DBSCAN.** 
-
-<img width="100%" src="https://user-images.githubusercontent.com/46801826/209517737-1f17f7af-8902-47cf-b67f-ced679e96b8a.gif"/>
-
+<p align="center">
+   <img width="100%" src="https://user-images.githubusercontent.com/46801826/209517737-1f17f7af-8902-47cf-b67f-ced679e96b8a.gif"/>
+</p>
 ------
 
 
@@ -40,7 +40,9 @@ sudo apt-get install ros-noetic-pcl-ros
 
 # 3. System Architecture
 
-<img width="100%" src="https://user-images.githubusercontent.com/46801826/209523105-5b1b4aea-8a48-4810-a53b-8cc20f722272.png"/>
+<p align="center">
+   <img width="90%" src="https://user-images.githubusercontent.com/46801826/209523105-5b1b4aea-8a48-4810-a53b-8cc20f722272.png" align="center"/>
+</p>
 
 ### 3.1 Node Overview
 
@@ -114,20 +116,25 @@ $$
 eps = r_{n-1}\frac{sin\Delta \theta }{sin(\lambda -\Delta \theta )}+3\sigma _{r}
 $$
 
-<img width="40%" src="https://user-images.githubusercontent.com/46801826/209551604-070d6195-98ab-4ab7-addf-553d70725f60.png" />
-
+<p align="center">
+   <img width="40%" src="https://user-images.githubusercontent.com/46801826/209551604-070d6195-98ab-4ab7-addf-553d70725f60.png" align="center"/>
+</p>
 
 * **DBSCAN(Density-based spatial clustering of applications with noise**)
 
    *<u>You can change `min_pts`and `min_eps` parameter in yaml file</u>*
 
-<img width="50%" src="https://user-images.githubusercontent.com/46801826/209553660-2969290e-8747-4268-b9a5-56ca6862f0ab.png" />
+<p align="center">
+   <img width="50%" src="https://user-images.githubusercontent.com/46801826/209553660-2969290e-8747-4268-b9a5-56ca6862f0ab.png" align="center"/>
+</p>
 
 ### 6.2 Kalman Filter
 
 This package use **Kalman Filter** to estimate target coordinates. 
 
-<img width="70%" src="https://user-images.githubusercontent.com/46801826/209535272-c6e50995-4e58-4623-8935-20fc6e1076d2.png"/>
+<p align="center">
+   <img width="70%" src="https://user-images.githubusercontent.com/46801826/209535272-c6e50995-4e58-4623-8935-20fc6e1076d2.png" align="center"/>
+</p>
 
 * **State Transition Matrix**(*Under the assumption of **constant velocity motion model***)
 
@@ -171,7 +178,9 @@ $$
 
 Accompany System is driving algorithm for this package and register as a patent. You can check it out at the link below. http://kportal.kipris.or.kr/kportal/search/total_search.do **(patent number is `1020200100552`)**
 
-<img width="50%" src="https://user-images.githubusercontent.com/46801826/209556746-00e5a262-3bfd-408a-a10e-166725556598.png"/>
+<p align="center">
+   <img width="50%" src="https://user-images.githubusercontent.com/46801826/209556746-00e5a262-3bfd-408a-a10e-166725556598.png" align="center"/>
+</p>
 
 ------
 
@@ -223,8 +232,9 @@ Accompany System is driving algorithm for this package and register as a patent.
 5. Working
 
    The robot works as follows Image.
-
-   <img width="70%" src="https://user-images.githubusercontent.com/46801826/209533936-a9adff43-f0db-4ab0-9acd-23304cc3cd76.png"/>
+   <p align="center">
+      <img width="70%" src="https://user-images.githubusercontent.com/46801826/209533936-a9adff43-f0db-4ab0-9acd-23304cc3cd76.png"/>
+   </p>
    
    | **State**    | Action | Condition (to Next State)                                    | **Description**                           |
    | ------------ | ------ | ------------------------------------------------------------ | ----------------------------------------- |
