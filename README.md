@@ -110,7 +110,7 @@ sudo apt-get install ros-noetic-pcl-ros
 
 * **ABD(Adaptive Breakpoint Detector)**
 
-<img width="30%" src="https://user-images.githubusercontent.com/46801826/209551604-070d6195-98ab-4ab7-addf-553d70725f60.png" />
+<img width="40%" src="https://user-images.githubusercontent.com/46801826/209551604-070d6195-98ab-4ab7-addf-553d70725f60.png" />
 $$
 𝒆𝒑𝒔=𝒓_{𝒏−𝟏}\frac{𝒔𝒊𝒏𝜟𝜽}{𝐬𝐢𝐧⁡(𝝀−𝜟𝜽)}+𝟑𝝈_𝒓
 $$
@@ -130,7 +130,7 @@ This package use **Kalman Filter** to estimate target coordinates.
 * **State Transition Matrix**(*Under the assumption of **constant velocity motion model***)
   $$
   A =\begin{bmatrix}
-  1& 0 & dt & 0 \\
+  1 & 0 & dt & 0 \\
   0 & 1 & 0 & dt \\
   0 & 0 & 1 & 0 \\
   0 & 0 & 0 & 1 \\
@@ -141,7 +141,8 @@ This package use **Kalman Filter** to estimate target coordinates.
   v_{y} \\
   \end{bmatrix}
   $$
-
+  
+  
 * **Obseravation Matrix**
   $$
   H = \begin{bmatrix}
@@ -156,7 +157,7 @@ This package use **Kalman Filter** to estimate target coordinates.
 
 $$
 Q=\begin{bmatrix}
-\Delta t^{2}\sigma_{vx}^{2}  & 0 & \Delta t\sigma_{vx}^{2} & 0 \\
+\Delta t^{2}\sigma_{vx}^{2} & 0 & \Delta t\sigma_{vx}^{2} & 0 \\
 0 & \Delta t^{2}\sigma_{vy}^{2} & 0 & \Delta t^{2}\sigma_{vy}^{2} \\
 \Delta t\sigma_{vx}^{2} & 0 & \sigma _{vx}^{2} & 0 \\
 0 & \Delta t\sigma_{vx}^{2} & 0 & \sigma _{vy}^{2} \\
@@ -171,13 +172,13 @@ $$
 
 ### 5.1 With gazebo simulation
 
-1. Change param.yaml
+1. Change `param.yaml`
 
    ```yaml
    is_simulation: true
    ```
 
-2. Run cartbot Simulation
+2. Run `simul.launch`
 
    ```
    roslaunch cartbot simul.launch
@@ -185,7 +186,7 @@ $$
 
 ### 5.2 In real world
 
-1. Change param.yaml
+1. Change `param.yaml`
 
    ```yaml
    is_simulation: false
