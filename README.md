@@ -110,10 +110,12 @@ sudo apt-get install ros-noetic-pcl-ros
 
 * **ABD(Adaptive Breakpoint Detector)**
 
+$$
+eps = r_{n-1}\frac{sin\Delta \theta }{sin(\lambda -\Delta \theta )}+3\sigma _{r}
+$$
+
 <img width="40%" src="https://user-images.githubusercontent.com/46801826/209551604-070d6195-98ab-4ab7-addf-553d70725f60.png" />
-$$
-𝒆𝒑𝒔=𝒓_{𝒏−𝟏}\frac{𝒔𝒊𝒏𝜟𝜽}{𝐬𝐢𝐧⁡(𝝀−𝜟𝜽)}+𝟑𝝈_𝒓
-$$
+
 
 * **DBSCAN(Density-based spatial clustering of applications with noise**)
 
