@@ -131,30 +131,30 @@ This package use **Kalman Filter** to estimate target coordinates.
 
 * **State Transition Matrix**(*Under the assumption of **constant velocity motion model***)
 
-  $$
-  A =\begin{bmatrix}
-  1 & 0 & dt & 0 \\
-  0 & 1 & 0 & dt \\
-  0 & 0 & 1 & 0 \\
-  0 & 0 & 0 & 1 \\
-  \end{bmatrix}\begin{bmatrix}
-  x \\
-  y \\
-  v_{x} \\
-  v_{y} \\
-  \end{bmatrix}
-  $$
+$$
+A=\begin{bmatrix}
+1 & 0 & dt & 0 \\
+0 & 1 & 0 & dt \\
+0 & 0 & 1 & 0 \\
+0 & 0 & 0 & 1 \\
+\end{bmatrix}\begin{bmatrix}
+x \\
+y \\
+v_{x} \\
+v_{y} \\
+\end{bmatrix}
+$$
 
 * **Obseravation Matrix**
 
-  $$
-  H = \begin{bmatrix}
-  1 & 0 & 0 & 0 \\
-  0 & 1 & 0 & 0 \\
-  0 & 0 & 1 & 0 \\
-  0 & 0 & 0 & 1 \\
-  \end{bmatrix}
-  $$
+$$
+H=\begin{bmatrix}
+1 & 0 & 0 & 0 \\
+0 & 1 & 0 & 0 \\
+0 & 0 & 1 & 0 \\
+0 & 0 & 0 & 1 \\
+\end{bmatrix}
+$$
 
 * **Process Noise Covariance Matrix** *<u>(You can change `sigma_a` parameter in yaml file)</u>*
 
