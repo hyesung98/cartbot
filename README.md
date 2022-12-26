@@ -26,11 +26,17 @@ sudo apt-get install libeigen3-dev
 sudo apt-get install ros-noetic-pcl-ros
 ```
 
-### 2.3 graph_rviz_plugin
+### 2.3 jsk_rviz_plugins
+
+```
+sudo apt-get install ros-noetic-jsk-rviz-plugins
+```
+
+### 2.4 graph_rviz_plugin
 
 `graph_rviz_plugin` is used for plotting kalman filter ouptut performance. You can install in https://gitlab.com/InstitutMaupertuis/graph_rviz_plugin
 
-### 2.4 YDLIDAR ROS Driver
+### 2.5 YDLIDAR ROS Driver
 
 `YDLIDAR ROS Driver` is used for getting Point Cloud message. Because, We used YDLIDAR G4 lidar for this System. You can install in https://github.com/YDLIDAR/ydlidar_ros_driver 
 
