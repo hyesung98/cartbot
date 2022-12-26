@@ -15,7 +15,6 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   nav_msgs
   visualization_msgs
-  interactive_markers
   tf2_ros
   eigen_stl_containers
   jsk_rviz_plugins
