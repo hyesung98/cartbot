@@ -2,7 +2,7 @@
 
 ## 1. Overview
 
-This package is for based on kalman filter and particle filter. 
+This package is based on kalman filter and adaptive epsilon DBSCAN. 
 
 <img width="100%" src="https://user-images.githubusercontent.com/46801826/209517737-1f17f7af-8902-47cf-b67f-ced679e96b8a.gif"/>
 
@@ -42,7 +42,7 @@ sudo apt-get install ros-noetic-pcl-ros
 
 <img width="100%" src="https://user-images.githubusercontent.com/46801826/209523105-5b1b4aea-8a48-4810-a53b-8cc20f722272.png"/>
 
-#### 3.1 Node Overview
+### 3.1 Node Overview
 
 | Node Name       | Description                                                  |
 | --------------- | ------------------------------------------------------------ |
@@ -51,7 +51,7 @@ sudo apt-get install ros-noetic-pcl-ros
 | Tracking Node   | Particle FIlter & Kalman Filter(Choose 1) based Tracking Node |
 | Avoiding Node   | Accompany System(Driving algorithm) &  Potential Field based Avoiding Node |
 
-#### 3.2 Message Overview
+### 3.2 Message Overview
 
 | Message Name | composition                                                  | Description                                |
 | ------------ | ------------------------------------------------------------ | ------------------------------------------ |
@@ -61,9 +61,9 @@ sudo apt-get install ros-noetic-pcl-ros
 | Encoder      | 1. left encoder count<br />2. right encoder count            | Encoder count data of each motor           |
 | Speed        | 1. left motor speed(RPM)<br />2. right motor speed(RPM)      | Target RPM of each motor                   |
 
-#### 3.3 ROS Parameter Overview
+### 3.3 ROS Parameter Overview
 
-You can modify parameter file which is located in config/param.yaml
+​	You can modify parameter file which is located in config/param.yaml
 
 | Parameter name  | Description                                                  | Type         |
 | --------------- | ------------------------------------------------------------ | ------------ |
@@ -100,11 +100,23 @@ You can modify parameter file which is located in config/param.yaml
 
 ------
 
+
+
 # 6. BackGround
 
 ### 6.1 Adaptive Epsilon DBSCAN
 
+Adaptive Epsilon DBSCAN is an algorithm than combines a DBSCAN and ABD(Adaptive Breakpoint Detector)
+
+<img width="100%" src="https://user-images.githubusercontent.com/46801826/209535115-2f66edf3-fa0e-43c4-9416-ad6fa5217c00.png" width="50%"/>
+$$
+𝒆𝒑𝒔={𝒓_(𝒏−𝟏)  𝒔𝒊𝒏𝜟𝜽\over(𝐬𝐢 𝐧⁡(𝝀−𝜟𝜽) )}+𝟑𝝈_𝒓
+$$
+
+
 ### 6.2 Kalman Filter
+
+<img width="100%" src="https://user-images.githubusercontent.com/46801826/209535272-c6e50995-4e58-4623-8935-20fc6e1076d2.png"/>
 
 ### 6.3 Potential Field 
 
@@ -114,7 +126,7 @@ You can modify parameter file which is located in config/param.yaml
 
 # 5. How to Run
 
-### With gazebo simulation
+### 5.1 With gazebo simulation
 
 1. Change param.yaml
 
@@ -128,7 +140,7 @@ You can modify parameter file which is located in config/param.yaml
    roslaunch cartbot simul.launch
    ```
 
-### In real world
+### 5.2 In real world
 
 1. Change param.yaml
 
@@ -143,14 +155,20 @@ You can modify parameter file which is located in config/param.yaml
    sudo chmod +x /dev/ttyUSB1 #-- Serial port
    ```
 
-2. Run YD LIDAR ROS Driver 
+3. Run YD LIDAR ROS Driver 
 
    ```
    roslaunch ydlidar_ros_driver lidar.launch
    ```
 
-3. Run cartbot 
+4. Run cartbot 
 
    ```
    roslaunch cartbot run.launch
    ```
+
+5. Robot is Working 
+
+   The robot works as follows.
+
+   <img width="100%" src="https://user-images.githubusercontent.com/46801826/209533936-a9adff43-f0db-4ab0-9acd-23304cc3cd76.png"/>
