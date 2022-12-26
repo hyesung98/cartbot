@@ -12,7 +12,7 @@ This package is based on **Kalman filter** and **Adaptive Epsilon DBSCAN.**
 
 # 2. Prerequisites
 
-You should preinstall `Ubuntu 20.04` and `Ros Noetic` to Run
+You should preinstall `Ubuntu 20.04` and `ROS Noetic` to Run
 
 ### 2.1 Eigen3
 
@@ -55,9 +55,9 @@ sudo apt-get install ros-noetic-pcl-ros
 
 | Message Name | composition                                                  | Description                                |
 | ------------ | ------------------------------------------------------------ | ------------------------------------------ |
-| Cluster      | 1. distance <br />2. center coordinate(x,y)<br />3. geometry_msgs/point | Clustered data by Adaptive Epsiolon DBSCAN |
+| Cluster      | 1. distance <br />2. center coordinates(x,y)<br />3. geometry_msgs/point | Clustered data by Adaptive Epsiolon DBSCAN |
 | ClusterArray | 1. Cluster[]                                                 | Vector array of Cluster                    |
-| Current      | 1. center coordinate(x,y)<br />2. state of Tracking Node     | Tracking data processed by Kalman filter   |
+| Current      | 1. center coordinates(x,y)<br />2. state of Tracking Node    | Tracking data processed by Kalman filter   |
 | Encoder      | 1. left encoder count<br />2. right encoder count            | Encoder count data of each motor           |
 | Speed        | 1. left motor speed(RPM)<br />2. right motor speed(RPM)      | Target RPM of each motor                   |
 
@@ -171,7 +171,7 @@ $$
 
 Accompany System is driving algorithm for this package and register as a patent. You can check it out at the link below. http://kportal.kipris.or.kr/kportal/search/total_search.do **(patent number is `1020200100552`)**
 
-<img width="70%" src="https://user-images.githubusercontent.com/46801826/209556746-00e5a262-3bfd-408a-a10e-166725556598.png"/>
+<img width="50%" src="https://user-images.githubusercontent.com/46801826/209556746-00e5a262-3bfd-408a-a10e-166725556598.png"/>
 
 ------
 
@@ -226,12 +226,12 @@ Accompany System is driving algorithm for this package and register as a patent.
 
    <img width="70%" src="https://user-images.githubusercontent.com/46801826/209533936-a9adff43-f0db-4ab0-9acd-23304cc3cd76.png"/>
    
-   | **State**    | Action | Condition(to Next State)                                     | **Description**                         |
-   | ------------ | ------ | ------------------------------------------------------------ | --------------------------------------- |
-   | **LOST**     | 정지   | 손바닥으로 15cm 이하의 거리로 LIDAR 가렸을 때 (to **COUNT**) | **param.yaml** 거리`dist_threshold`변경 |
-   | **COUNT**    | 정지   | 4초 후(4초 동안 사용자 동행 위치 선정) (to **INIT**)         | **param.yam**l 시간 `wait_time`변경     |
-   | **INIT**     | 정지   | Target 좌표 설정 후 (to **TRACKING**)                        |                                         |
-   | **TRACKING** | 동작   | 10번 이상 Tracking 실패할 때 (to **LOST**)<br />손바닥으로 15cm 이하의 거리로 LIDAR 가렸을 때(to **STOP**) | **param.yaml** 거리`dist_threshold`변경 |
-   | **STOP**     | 정지   | 10초 후(to **LOST**)                                         | **param.yaml** 시간 `stop_time` 변경    |
+   | **State**    | Action | Condition (to Next State)                                    | **Description**                           |
+   | ------------ | ------ | ------------------------------------------------------------ | ----------------------------------------- |
+   | **LOST**     | 정지   | 손바닥으로 15cm 이하의 거리로 LIDAR 가렸을 때 **(to COUNT)** | **param.yaml** <br />`dist_threshold`변경 |
+   | **COUNT**    | 정지   | 4초 후(4초 동안 사용자 동행 위치 선정) **(to INIT)**         | **param.yaml**  <br />`wait_time`변경     |
+   | **INIT**     | 정지   | Target 좌표 설정 후 **(to TRACKING)**                        |                                           |
+   | **TRACKING** | 동작   | 10번 이상 Tracking 실패할 때 **(to LOST)**<br />손바닥으로 15cm 이하의 거리로 LIDAR 가렸을 때 **(to STOP)** | **param.yaml** <br />`dist_threshold`변경 |
+   | **STOP**     | 정지   | 10초 후 **(to LOST)**                                        | **param.yaml** <br /> `stop_time` 변경    |
    
    
