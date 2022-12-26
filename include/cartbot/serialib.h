@@ -5,13 +5,11 @@
 \version 2.0
 \date    december the 27th of 2019
 This Serial library is used to communicate through serial port.
-
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE X CONSORTIUM BE LIABLE FOR ANY CLAIM,
 DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
 This is a licence-free software, it can be used by anyone who try to build a better world.
 */
 
@@ -42,15 +40,12 @@ This is a licence-free software, it can be used by anyone who try to build a bet
     #include <stdlib.h>
     #include <sys/types.h>
     #include <sys/shm.h>
-    // #include <termios.h>
+    #include <termios.h>
     #include <string.h>
     #include <iostream>
     #include <sys/time.h>
-    #include "/usr/include/asm-generic/termbits.h"
-    #include "/usr/include/asm-generic/ioctls.h"
     // File control definitions
     #include <fcntl.h>
-    #include <errno.h>
     #include <unistd.h>
     #include <sys/ioctl.h>
 #endif
@@ -238,6 +233,8 @@ private:
 #endif
 
 };
+
+
 
 /*!  \class     timeOut
      \brief     This class can manage a timer which is used as a timeout.
