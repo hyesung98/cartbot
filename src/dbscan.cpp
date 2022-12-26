@@ -85,7 +85,7 @@ std::vector<int> DBSCAN::CalculateCluster(Point point)
     return clst_idx;
 }
 
-// Adaptive Breakpoint Detector
+// Range Query
 inline void DBSCAN::CalculateThreshold()
 {
     float threshold;
@@ -105,6 +105,7 @@ inline void DBSCAN::CalculateThreshold()
             dth = pt_iter->theta - (pt_iter-1)->theta;
             dist = (pt_iter - 1)->range;
         }
+        // Adaptive Breakpoint Detector
         threshold = dist * (SIN(dth)) / (SIN(l - dth)) + s * 3;
         m_thresholds_.push_back(std::min(threshold, m_epsilon_));
         idx++;
