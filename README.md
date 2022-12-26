@@ -130,7 +130,7 @@ This package use **Kalman Filter** to estimate target coordinates.
 <img width="70%" src="https://user-images.githubusercontent.com/46801826/209535272-c6e50995-4e58-4623-8935-20fc6e1076d2.png"/>
 
 * **State Transition Matrix**(*Under the assumption of **constant velocity motion model***)
-  
+
   $$
   A =\begin{bmatrix}
   1 & 0 & dt & 0 \\
@@ -144,10 +144,9 @@ This package use **Kalman Filter** to estimate target coordinates.
   v_{y} \\
   \end{bmatrix}
   $$
-  
-  
+
 * **Obseravation Matrix**
-  
+
   $$
   H = \begin{bmatrix}
   1 & 0 & 0 & 0 \\
