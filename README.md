@@ -167,6 +167,12 @@ Q=\begin{bmatrix}
 \end{bmatrix}
 $$
 
+### 6.3 Accompany System
+
+Accompany System is driving algorithm for this package and register as a patent. You can check it out at the link below. http://kportal.kipris.or.kr/kportal/search/total_search.do **(patent number is `1020200100552`)**
+
+<img width="70%" src="https://user-images.githubusercontent.com/46801826/209556746-00e5a262-3bfd-408a-a10e-166725556598.png"/>
+
 ------
 
 
@@ -214,8 +220,18 @@ $$
    roslaunch cartbot run.launch
    ```
 
-5. Robot is Working 
+5. Working
 
    The robot works as follows Image.
 
    <img width="70%" src="https://user-images.githubusercontent.com/46801826/209533936-a9adff43-f0db-4ab0-9acd-23304cc3cd76.png"/>
+   
+   | **State**    | Action | Condition(to Next State)                                     | **Description**                         |
+   | ------------ | ------ | ------------------------------------------------------------ | --------------------------------------- |
+   | **LOST**     | 정지   | 손바닥으로 15cm 이하의 거리로 LIDAR 가렸을 때 (to **COUNT**) | **param.yaml** 거리`dist_threshold`변경 |
+   | **COUNT**    | 정지   | 4초 후(4초 동안 사용자 동행 위치 선정) (to **INIT**)         | **param.yam**l 시간 `wait_time`변경     |
+   | **INIT**     | 정지   | Target 좌표 설정 후 (to **TRACKING**)                        |                                         |
+   | **TRACKING** | 동작   | 10번 이상 Tracking 실패할 때 (to **LOST**)<br />손바닥으로 15cm 이하의 거리로 LIDAR 가렸을 때(to **STOP**) | **param.yaml** 거리`dist_threshold`변경 |
+   | **STOP**     | 정지   | 10초 후(to **LOST**)                                         | **param.yaml** 시간 `stop_time` 변경    |
+   
+   
