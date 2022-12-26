@@ -18,7 +18,7 @@ unsigned int lost_cnt = 0;
 State state = State::LOST;
 
 /* ROS Param Variable */
-double wait_time;
+double wait_time, stop_time;
 double dist_threshold;
 double min_range;
 
@@ -26,6 +26,7 @@ double min_range;
 double init_cnt = 0;
 double init_x, init_y;
 ros::Time init_time;
+double stop_cnt = 0;
 
 bool getParameter(ros::NodeHandle &nh)
 {
@@ -95,6 +96,8 @@ bool getParameter(ros::NodeHandle &nh)
         return false;
     if (!nh.getParam("wait_time", wait_time))
         return false;
+    if (!nh.getParam("stop_time", stop_time))
+        return false;
 
     std::cout << "A : \n"
               << mat_A << std::endl;
@@ -128,6 +131,22 @@ void clusterlistCallback(const cartbot::ClusterArray::ConstPtr &clusterlist)
     cartbot::Current current;
     switch (state)
     {
+    case STOP:
+    {
+        ROS_INFO("STATE----> STOP");
+        current.state = state;
+        ros::Time now_time = ros::Time::now();
+        ros::Duration duration_t = now_time - pre_time;
+        const double dt = duration_t.toSec();
+        stop_cnt += dt;
+        pre_time = now_time;
+        if (stop_cnt > stop_time)
+        {
+            stop_cnt = 0;
+            state = LOST;
+        }
+        break;
+    }
     case LOST:
     {
         ROS_INFO("STATE----> OBJECT_LOST");
@@ -158,7 +177,7 @@ void clusterlistCallback(const cartbot::ClusterArray::ConstPtr &clusterlist)
             if (abs(dist) < 0.5)
             {
                 ros::Duration duration_t = ros::Time::now() - init_time;
-                init_cnt += duration_t.toSec();
+                init_cnt = duration_t.toSec();
                 publishEstimationBox(estimate_pub, cluster.mid_x, cluster.mid_y, state);
                 islost = false;
                 init_x = cluster.mid_x;
@@ -218,7 +237,8 @@ void clusterlistCallback(const cartbot::ClusterArray::ConstPtr &clusterlist)
         for (auto cluster : clusterlist->Clusters)
         {
             float dist = sqrt(pow(cluster.mid_x - e.pos[X], 2) + pow(cluster.mid_y - e.pos[Y], 2));
-            if (abs(dist) < 0.5)
+            float dist2 = sqrt(pow(cluster.mid_x, 2) + pow(cluster.mid_y, 2));
+            if (abs(dist) < 0.6)
             {
                 measure_list.push_back(cluster);
                 islost = false;
@@ -228,10 +248,15 @@ void clusterlistCallback(const cartbot::ClusterArray::ConstPtr &clusterlist)
             {
                 current.objects.push_back(cluster);
             }
+            if (dist2 < 0.2)
+            {
+                state = STOP;
+            }
         }
 
         if (!islost)
         {
+            lost_cnt = 0;
             int m_idx = 0;
             if (measure_list.size() > 1)
             {
@@ -253,9 +278,9 @@ void clusterlistCallback(const cartbot::ClusterArray::ConstPtr &clusterlist)
                     }
                 }
             }
-            for (std::size_t i = 0 ; i < measure_list.size() ; i++)
+            for (std::size_t i = 0; i < measure_list.size(); i++)
             {
-                if(i != m_idx)
+                if (i != m_idx)
                     current.objects.push_back(measure_list[i]);
             }
             ros::Time now_time = measure_list[m_idx].Header.stamp;
@@ -274,7 +299,6 @@ void clusterlistCallback(const cartbot::ClusterArray::ConstPtr &clusterlist)
             current.y = e.pos[Y];
             current.vx = e.vel[X];
             current.vy = e.vel[Y];
-
             publishPlot(x_comp_pub, y_comp_pub,
                         m.now_pos[X], m.now_pos[Y], e.pos[X], e.pos[Y],
                         m.now_vel[X], m.now_vel[Y], e.vel[X], e.vel[Y]);
@@ -285,8 +309,8 @@ void clusterlistCallback(const cartbot::ClusterArray::ConstPtr &clusterlist)
         {
             lost_cnt++;
         }
-
-        if (lost_cnt > 7)
+        current.lost_cnt = lost_cnt;
+        if (lost_cnt > 10)
         {
             state = LOST;
         }
