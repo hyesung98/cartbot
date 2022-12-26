@@ -35,6 +35,7 @@
 
 enum State
 {
+    STOP,
     LOST,
     COUNT,
     INIT,
