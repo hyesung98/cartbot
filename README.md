@@ -2,7 +2,7 @@
 
 ## 1. Overview
 
-This package is based on kalman filter and adaptive epsilon DBSCAN. 
+This package is based on **Kalman filter** and **Adaptive Epsilon DBSCAN.** 
 
 <img width="100%" src="https://user-images.githubusercontent.com/46801826/209517737-1f17f7af-8902-47cf-b67f-ced679e96b8a.gif"/>
 
@@ -12,7 +12,7 @@ This package is based on kalman filter and adaptive epsilon DBSCAN.
 
 # 2. Prerequisites
 
-You should preinstall Ubuntu 20.04 and Ros Melodic to Run
+You should preinstall `Ubuntu 20.04` and `Ros Noetic` to Run
 
 ### 2.1 Eigen3
 
@@ -28,11 +28,11 @@ sudo apt-get install ros-noetic-pcl-ros
 
 ### 2.3 graph_rviz_plugin
 
-*graph_rviz_plugin* is used for plotting kalman filter ouptut performance. You can install in https://gitlab.com/InstitutMaupertuis/graph_rviz_plugin
+`graph_rviz_plugin` is used for plotting kalman filter ouptut performance. You can install in https://gitlab.com/InstitutMaupertuis/graph_rviz_plugin
 
 ### 2.4 YDLIDAR ROS Driver
 
-*YDLIDAR ROS Driver* is used for getting Point Cloud message. Because, We used YDLIDAR G4 lidar for this System. You can install in https://github.com/YDLIDAR/ydlidar_ros_driver 
+`YDLIDAR ROS Driver` is used for getting Point Cloud message. Because, We used YDLIDAR G4 lidar for this System. You can install in https://github.com/YDLIDAR/ydlidar_ros_driver 
 
 ------
 
@@ -63,7 +63,7 @@ sudo apt-get install ros-noetic-pcl-ros
 
 ### 3.3 ROS Parameter Overview
 
-​	You can modify parameter file which is located in config/param.yaml
+​	You can modify **yaml file** which is located in `config/param.yaml`
 
 | Parameter name  | Description                                                  | Type         |
 | --------------- | ------------------------------------------------------------ | ------------ |
@@ -106,19 +106,62 @@ sudo apt-get install ros-noetic-pcl-ros
 
 ### 6.1 Adaptive Epsilon DBSCAN
 
-Adaptive Epsilon DBSCAN is an algorithm than combines a DBSCAN and ABD(Adaptive Breakpoint Detector)
+**Adaptive Epsilon DBSCAN** is an algorithm that combines a **DBSCAN** and **ABD**(Adaptive Breakpoint Detector). We use Adaptive Epsilon DBSCAN to clustering object.
 
-<img width="100%" src="https://user-images.githubusercontent.com/46801826/209535115-2f66edf3-fa0e-43c4-9416-ad6fa5217c00.png" width="50%"/>
+* **ABD(Adaptive Breakpoint Detector)**
+
+<img width="30%" src="https://user-images.githubusercontent.com/46801826/209551604-070d6195-98ab-4ab7-addf-553d70725f60.png" />
 $$
-𝒆𝒑𝒔={𝒓_(𝒏−𝟏)  𝒔𝒊𝒏𝜟𝜽\over(𝐬𝐢 𝐧⁡(𝝀−𝜟𝜽) )}+𝟑𝝈_𝒓
+𝒆𝒑𝒔=𝒓_{𝒏−𝟏}\frac{𝒔𝒊𝒏𝜟𝜽}{𝐬𝐢𝐧⁡(𝝀−𝜟𝜽)}+𝟑𝝈_𝒓
 $$
 
+* **DBSCAN(Density-based spatial clustering of applications with noise**)
+
+   *<u>You can change `min_pts`and `min_eps` parameter in yaml file</u>*
+
+<img width="50%" src="https://user-images.githubusercontent.com/46801826/209553660-2969290e-8747-4268-b9a5-56ca6862f0ab.png" />
 
 ### 6.2 Kalman Filter
 
-<img width="100%" src="https://user-images.githubusercontent.com/46801826/209535272-c6e50995-4e58-4623-8935-20fc6e1076d2.png"/>
+This package use **Kalman Filter** to estimate target coordinates. 
 
-### 6.3 Potential Field 
+<img width="70%" src="https://user-images.githubusercontent.com/46801826/209535272-c6e50995-4e58-4623-8935-20fc6e1076d2.png"/>
+
+* **State Transition Matrix**(*Under the assumption of **constant velocity motion model***)
+  $$
+  A =\begin{bmatrix}
+  1& 0 & dt & 0 \\
+  0 & 1 & 0 & dt \\
+  0 & 0 & 1 & 0 \\
+  0 & 0 & 0 & 1 \\
+  \end{bmatrix}\begin{bmatrix}
+  x \\
+  y \\
+  v_{x} \\
+  v_{y} \\
+  \end{bmatrix}
+  $$
+
+* **Obseravation Matrix**
+  $$
+  H = \begin{bmatrix}
+  1 & 0 & 0 & 0 \\
+  0 & 1 & 0 & 0 \\
+  0 & 0 & 1 & 0 \\
+  0 & 0 & 0 & 1 \\
+  \end{bmatrix}
+  $$
+
+* **Process Noise Covariance Matrix** *<u>(You can change `sigma_a` parameter in yaml file)</u>*
+
+$$
+Q=\begin{bmatrix}
+\Delta t^{2}\sigma_{vx}^{2}  & 0 & \Delta t\sigma_{vx}^{2} & 0 \\
+0 & \Delta t^{2}\sigma_{vy}^{2} & 0 & \Delta t^{2}\sigma_{vy}^{2} \\
+\Delta t\sigma_{vx}^{2} & 0 & \sigma _{vx}^{2} & 0 \\
+0 & \Delta t\sigma_{vx}^{2} & 0 & \sigma _{vy}^{2} \\
+\end{bmatrix}
+$$
 
 ------
 
@@ -161,7 +204,7 @@ $$
    roslaunch ydlidar_ros_driver lidar.launch
    ```
 
-4. Run cartbot 
+4. Run cartbot `run.launch`
 
    ```
    roslaunch cartbot run.launch
@@ -169,6 +212,6 @@ $$
 
 5. Robot is Working 
 
-   The robot works as follows.
+   The robot works as follows Image.
 
-   <img width="100%" src="https://user-images.githubusercontent.com/46801826/209533936-a9adff43-f0db-4ab0-9acd-23304cc3cd76.png"/>
+   <img width="70%" src="https://user-images.githubusercontent.com/46801826/209533936-a9adff43-f0db-4ab0-9acd-23304cc3cd76.png"/>
