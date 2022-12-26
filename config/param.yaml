@@ -1,12 +1,17 @@
+# %Simulation
+# true -->Using Gazebo World / false -->Work in Real Worlds
+is_simulation: true
+
 # %Clustering Node Parameter
 min_pts: 12.0
 min_eps: 0.25
 window_boundary: 3.5
 
 # %Tracking Node Parameter
-dist_threshold: 0.3
+dist_threshold: 1.0
 min_range: 0.5
-wait_time: 30.0
+wait_time: 3.0
+stop_time: 5.0
 
 # --State Transition Matrix (4x4)
 A: [1,    0,    0.1,  0,
@@ -41,9 +46,11 @@ Kp_rel: 0.0005
 Kp_att : 1.3
 min_dist: 1.3
 u_k: 0.1
+avoid_time: 6.0
+target_r: 0.35
 
 # --Hardware System for Accompany System
-# true -->Using Advanced Accompany System false -->Using Accompany System
+# true -->Using Advanced Accompany System / false -->Using Accompany System
 isadvanced: false
 wheel_radius: 0.085 #0.1
 wheel_interval: 0.5 #0.48
@@ -54,7 +61,7 @@ weight: 15
 # --PID Gain Tuning
 max_err_x: 20
 max_err_y: 20
-kp_x: 15.0
-kp_y: 15.0
+kp_x: 15.0 # 5.0 (in simul)
+kp_y: 15.0 # 5.0 (in simul)
 ki_x: 0.00
 ki_y: 0.00
